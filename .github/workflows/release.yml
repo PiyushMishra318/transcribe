@@ -1,0 +1,135 @@
+name: Release
+
+on:
+  push:
+    branches: [main, master]
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      tag: ${{ steps.meta.outputs.tag }}
+      release: ${{ steps.meta.outputs.release }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - id: meta
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${GITHUB_REF}" == refs/tags/v* ]]; then
+            VERSION="${GITHUB_REF#refs/tags/v}"
+            TAG="${GITHUB_REF#refs/tags/}"
+            echo "release=true" >> "$GITHUB_OUTPUT"
+          else
+            VERSION="$(sed -n 's/^version = "\(.*\)"/\1/p' Cargo.toml | head -1)"
+            TAG="v${VERSION}"
+            if git rev-parse "$TAG" >/dev/null 2>&1; then
+              echo "release=false" >> "$GITHUB_OUTPUT"
+            else
+              echo "release=true" >> "$GITHUB_OUTPUT"
+            fi
+          fi
+          echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: prepare
+    if: needs.prepare.outputs.release == 'true'
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            archive: tar.gz
+            asset_ext: .tar.gz
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            archive: zip
+            asset_ext: .zip
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+            archive: tar.gz
+            asset_ext: .tar.gz
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Build release (CPU)
+        run: cargo build --release --locked --no-default-features
+
+      - name: Package Linux
+        if: matrix.runner == 'ubuntu-latest'
+        shell: bash
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          TARGET="${{ matrix.target }}"
+          PKG="transcribe-v${VERSION}-${TARGET}"
+          mkdir -p "dist/${PKG}"
+          cp target/release/transcribe "dist/${PKG}/"
+          tar -C dist -czf "dist/${PKG}.tar.gz" "${PKG}"
+
+      - name: Package Windows
+        if: matrix.runner == 'windows-latest'
+        shell: pwsh
+        run: |
+          $version = "${{ needs.prepare.outputs.version }}"
+          $target = "${{ matrix.target }}"
+          $pkg = "transcribe-v$version-$target"
+          New-Item -ItemType Directory -Force -Path "dist/$pkg" | Out-Null
+          Copy-Item target/release/transcribe.exe "dist/$pkg/"
+          Compress-Archive -Path "dist/$pkg" -DestinationPath "dist/$pkg.zip"
+
+      - name: Package macOS
+        if: matrix.runner == 'macos-latest'
+        shell: bash
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          TARGET="${{ matrix.target }}"
+          PKG="transcribe-v${VERSION}-${TARGET}"
+          mkdir -p "dist/${PKG}"
+          cp target/release/transcribe "dist/${PKG}/"
+          tar -C dist -czf "dist/${PKG}.tar.gz" "${PKG}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: dist/*${{ matrix.asset_ext }}
+          retention-days: 1
+
+  release:
+    needs: [prepare, build]
+    if: needs.prepare.outputs.release == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Publish GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          name: ${{ needs.prepare.outputs.tag }}
+          target_commitish: ${{ github.sha }}
+          generate_release_notes: true
+          prerelease: ${{ contains(needs.prepare.outputs.version, '-') }}
+          files: artifacts/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
