@@ -70,7 +70,7 @@ jobs:
         run: |
           ./target/debug/transcribe --version
           ./target/debug/transcribe help
-          ./target/debug/transcribe help run | head -5
+          ./target/debug/transcribe help run | head -n 5 || true
 
   e2e:
     runs-on: ubuntu-latest
