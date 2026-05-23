@@ -42,20 +42,25 @@ jobs:
         if: matrix.runner == 'ubuntu-latest'
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev pkg-config curl
 
-      - name: Install sherpa-onnx prebuilt libraries
+      - name: Build release (CPU)
         if: matrix.runner != 'windows-latest'
         shell: bash
-        run: bash scripts/setup-sherpa-onnx-prebuilt.sh
-
-      - name: Install sherpa-onnx prebuilt libraries (Windows)
-        if: matrix.runner == 'windows-latest'
-        shell: pwsh
-        run: ./scripts/setup-sherpa-onnx-prebuilt.ps1
+        run: |
+          bash scripts/setup-sherpa-onnx-prebuilt.sh
+          test -d "$SHERPA_ONNX_LIB_DIR"
+          ls -la "$SHERPA_ONNX_LIB_DIR"
+          cargo build --release --locked --no-default-features
 
       - name: Build release (CPU)
-        env:
-          SHERPA_ONNX_LIB_DIR: ${{ env.SHERPA_ONNX_LIB_DIR }}
-        run: cargo build --release --locked --no-default-features
+        if: matrix.runner == 'windows-latest'
+        shell: pwsh
+        run: |
+          ./scripts/setup-sherpa-onnx-prebuilt.ps1
+          if (-not (Test-Path -PathType Container $env:SHERPA_ONNX_LIB_DIR)) {
+            throw "SHERPA_ONNX_LIB_DIR missing: $($env:SHERPA_ONNX_LIB_DIR)"
+          }
+          Get-ChildItem $env:SHERPA_ONNX_LIB_DIR
+          cargo build --release --locked --no-default-features
 
       - name: Package Linux
         if: matrix.runner == 'ubuntu-latest'
