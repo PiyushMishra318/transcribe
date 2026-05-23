@@ -4,14 +4,14 @@ Thank you for considering a contribution. This project is a Rust CLI for batch-t
 
 ## Before you start
 
-1. Check existing [issues](https://github.com/your-org/episode-transcribe/issues) for duplicates or planned work.
+1. Check existing [issues](https://github.com/PiyushMishra318/transcribe/issues) for duplicates or planned work.
 2. For large changes, open an issue first so we can agree on approach.
 3. Read [README.md](README.md) for setup and [models/README.md](models/README.md) for model downloads.
 
 ## Development setup
 
 ```bash
-git clone https://github.com/your-org/episode-transcribe.git
+git clone https://github.com/PiyushMishra318/transcribe.git
 cd episode-transcribe
 ```
 

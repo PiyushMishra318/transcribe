@@ -1,0 +1,43 @@
+[package]
+name = "episode-transcribe"
+version = "0.1.0"
+edition = "2021"
+description = "Batch-transcribe tabletop episode MP4s with Whisper and speaker diarization"
+readme = "README.md"
+license = "MIT"
+repository = "https://github.com/PiyushMishra318/transcribe"
+keywords = ["whisper", "transcription", "subtitles", "podcast", "dnd"]
+categories = ["command-line-utilities", "multimedia::audio"]
+
+[features]
+default = ["cuda"]
+cuda = ["whisper-rs/cuda"]
+
+[lib]
+name = "episode_transcribe"
+path = "src/lib.rs"
+
+[[bin]]
+name = "transcribe"
+path = "src/main.rs"
+
+[dependencies]
+anyhow = "1"
+chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
+clap = { version = "4", features = ["derive"] }
+dialoguer = "0.11"
+directories = "5"
+hound = "3"
+rodio = { version = "0.19", default-features = false, features = ["wav"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# Shared libs avoid MT/MD clash with whisper-rs on Windows (static sherpa is /MT).
+sherpa-onnx = { version = "1.13", default-features = false, features = ["shared"] }
+walkdir = "2"
+whisper-rs = "0.16"
+
+[dev-dependencies]
+assert_cmd = "2"
+predicates = "3"
+tempfile = "3"

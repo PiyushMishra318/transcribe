@@ -31,7 +31,7 @@ transcribe help profiles     # one topic
 ### Windows (GPU)
 
 ```powershell
-git clone https://github.com/your-org/episode-transcribe.git
+git clone https://github.com/PiyushMishra318/transcribe.git
 cd episode-transcribe
 powershell -ExecutionPolicy Bypass -File scripts/install.ps1
 ```
