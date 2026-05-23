@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Opt-in hook: install with ./scripts/install-git-hooks.sh
+set -euo pipefail
+ROOT="$(git rev-parse --show-toplevel)"
+cd "$ROOT"
+exec "$ROOT/scripts/pre-push.sh"

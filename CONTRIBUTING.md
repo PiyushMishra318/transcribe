@@ -35,10 +35,47 @@ Optional: download test models (see [models/README.md](models/README.md)) for co
 TRANSCRIBE_E2E=1 cargo test --release --no-default-features -- --ignored
 ```
 
+## Before you push
+
+Run the same fast checks CI runs on every push, **before** `git push` — do not wait for CI to fail on formatting.
+
+**Recommended (full local parity with CI lint + test):**
+
+```bash
+./scripts/check.sh
+```
+
+On Windows (PowerShell):
+
+```powershell
+powershell -ExecutionPolicy Bypass -File scripts/check.ps1
+```
+
+**Minimum before push** (matches CI `lint` job — fast):
+
+```bash
+cargo fmt --all -- --check
+cargo clippy --locked --no-default-features -- -D warnings
+```
+
+Or use the pre-push script directly:
+
+```bash
+./scripts/pre-push.sh
+```
+
+**Optional: install a pre-push hook** (opt-in, repo-local only):
+
+```bash
+./scripts/install-git-hooks.sh
+```
+
+This sets `git config core.hooksPath .githooks` for **this repository only** (not global). After install, `git push` runs `./scripts/pre-push.sh` automatically. Skip once with `git push --no-verify`.
+
 ## Code style
 
-- Run `cargo fmt` before committing.
-- Keep `cargo clippy --no-default-features -- -D warnings` clean.
+- Run `cargo fmt` before committing; CI uses `cargo fmt --all -- --check`.
+- Keep `cargo clippy --locked --no-default-features -- -D warnings` clean.
 - Match existing module layout and naming in `src/`.
 - Prefer focused changes; avoid drive-by refactors.
 
@@ -52,12 +89,10 @@ TRANSCRIBE_E2E=1 cargo test --release --no-default-features -- --ignored
    git checkout -b short-descriptive-name
    ```
 
-3. Make your changes and verify locally:
+3. Make your changes and verify locally (see [Before you push](#before-you-push)):
 
    ```bash
-   cargo fmt
-   cargo clippy --no-default-features -- -D warnings
-   cargo test --locked --no-default-features
+   ./scripts/check.sh
    ```
 
 4. Commit with a clear message:
