@@ -21,6 +21,9 @@ jobs:
 
       - uses: Swatinem/rust-cache@v2
 
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev pkg-config
+
       - name: Format
         run: cargo fmt --all -- --check
 
@@ -38,7 +41,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg libasound2-dev pkg-config
 
       - name: Build (CPU)
         run: cargo build --locked --no-default-features
@@ -83,7 +86,7 @@ jobs:
       - uses: Swatinem/rust-cache@v2
 
       - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg curl
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg curl libasound2-dev pkg-config
 
       - name: Download ggml-base model
         run: |
