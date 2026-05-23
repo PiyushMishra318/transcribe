@@ -1,0 +1,107 @@
+# Pre-built CPU binaries on every push to the default branch (GitHub Actions artifacts).
+# Tagged releases (v*) are handled by release.yml.
+name: Build artifacts
+
+on:
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            asset_ext: .tar.gz
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            asset_ext: .zip
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+            asset_ext: .tar.gz
+    steps:
+      - uses: actions/checkout@v4
+
+      - id: version
+        shell: bash
+        run: echo "version=${GITHUB_SHA::7}" >> "$GITHUB_OUTPUT"
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-directories: target/sherpa-onnx-prebuilt
+
+      - name: Install Linux system dependencies
+        if: matrix.runner == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev pkg-config curl
+
+      - name: Install sherpa-onnx prebuilt libraries
+        if: matrix.runner != 'windows-latest'
+        shell: bash
+        run: bash scripts/setup-sherpa-onnx-prebuilt.sh
+
+      - name: Install sherpa-onnx prebuilt libraries (Windows)
+        if: matrix.runner == 'windows-latest'
+        shell: pwsh
+        run: ./scripts/setup-sherpa-onnx-prebuilt.ps1
+
+      - name: Build release (CPU)
+        env:
+          SHERPA_ONNX_LIB_DIR: ${{ env.SHERPA_ONNX_LIB_DIR }}
+        run: cargo build --release --locked --no-default-features
+
+      - name: Package Linux
+        if: matrix.runner == 'ubuntu-latest'
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TARGET="${{ matrix.target }}"
+          PKG="transcribe-v${VERSION}-${TARGET}"
+          mkdir -p "dist/${PKG}"
+          cp target/release/transcribe "dist/${PKG}/"
+          shopt -s nullglob
+          for lib in target/release/*.so*; do
+            cp "$lib" "dist/${PKG}/"
+          done
+          tar -C dist -czf "dist/${PKG}.tar.gz" "${PKG}"
+
+      - name: Package Windows
+        if: matrix.runner == 'windows-latest'
+        shell: pwsh
+        run: |
+          $version = "${{ steps.version.outputs.version }}"
+          $target = "${{ matrix.target }}"
+          $pkg = "transcribe-v$version-$target"
+          New-Item -ItemType Directory -Force -Path "dist/$pkg" | Out-Null
+          Copy-Item target/release/transcribe.exe "dist/$pkg/"
+          Get-ChildItem target/release/*.dll | Copy-Item -Destination "dist/$pkg/"
+          Compress-Archive -Path "dist/$pkg" -DestinationPath "dist/$pkg.zip"
+
+      - name: Package macOS
+        if: matrix.runner == 'macos-latest'
+        shell: bash
+        run: |
+          VERSION="${{ steps.version.outputs.version }}"
+          TARGET="${{ matrix.target }}"
+          PKG="transcribe-v${VERSION}-${TARGET}"
+          mkdir -p "dist/${PKG}"
+          cp target/release/transcribe "dist/${PKG}/"
+          shopt -s nullglob
+          for lib in target/release/*.dylib; do
+            cp "$lib" "dist/${PKG}/"
+          done
+          tar -C dist -czf "dist/${PKG}.tar.gz" "${PKG}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: transcribe-${{ matrix.target }}-${{ steps.version.outputs.version }}
+          path: dist/*${{ matrix.asset_ext }}
+          retention-days: 90

@@ -141,9 +141,16 @@ CI runs on push and pull requests to `main` / `master` (see [.github/workflows/c
 
 ## Releases
 
-Pre-built **CPU** binaries (`--no-default-features`, no CUDA) for Linux, Windows, and macOS are published by [.github/workflows/release.yml](.github/workflows/release.yml). Each archive includes `transcribe` (or `transcribe.exe` on Windows) plus bundled sherpa-onnx shared libraries (`.so`, `.dll`, or `.dylib`).
+Pre-built **CPU** binaries (`--no-default-features`, no CUDA) for Linux, Windows, and macOS. Each archive includes `transcribe` (or `transcribe.exe` on Windows) plus bundled sherpa-onnx shared libraries (`.so`, `.dll`, or `.dylib`).
 
-Releases are **tag-triggered only** (pushing to `main` / `master` does not publish). Use a semver tag:
+| Trigger | Workflow | Output |
+|---------|----------|--------|
+| Push to `main` / `master` | [.github/workflows/build-artifacts.yml](.github/workflows/build-artifacts.yml) | [Actions artifacts](https://docs.github.com/en/actions/managing-workflow-runs/downloading-workflow-artifacts) (90-day retention), named `transcribe-{target}-{short-sha}` |
+| Push tag `v*` | [.github/workflows/release.yml](.github/workflows/release.yml) | GitHub Release with attached assets |
+
+**Branch pushes** package as `transcribe-v{7-char-sha}-{target}` (e.g. `transcribe-v0c8ad05-x86_64-unknown-linux-gnu.tar.gz`). Download from **Actions → Build artifacts → latest run**.
+
+**Tagged releases** use a semver tag:
 
 | Tag pattern | GitHub release |
 |-------------|----------------|
