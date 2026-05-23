@@ -153,8 +153,10 @@ mod tests {
     #[test]
     fn repo_models_from_manifest_dir() {
         let manifest = PathBuf::from(env!("CARGO_MANIFEST_DIR"));
+        let prev = std::env::current_dir().unwrap();
         std::env::set_current_dir(&manifest).unwrap();
         let dir = default_models_dir().unwrap();
+        let _ = std::env::set_current_dir(prev);
         assert!(dir.ends_with("models") || dir.exists());
     }
 }

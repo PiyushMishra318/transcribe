@@ -50,14 +50,7 @@ jobs:
         run: cargo test --locked --no-default-features
 
       - name: Download test models
-        run: |
-          mkdir -p models/sherpa-onnx-pyannote-segmentation-3-0
-          curl -fsSL -o models/ggml-base.bin \
-            https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin
-          curl -fsSL -o models/wespeaker_en_voxceleb_resnet34_LM.onnx \
-            https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-recongition-models/wespeaker_en_voxceleb_resnet34_LM.onnx
-          curl -fsSL -o models/sherpa-onnx-pyannote-segmentation-3-0/model.onnx \
-            https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-segmentation-models/sherpa-onnx-pyannote-segmentation-3-0/model.onnx
+        run: bash scripts/download-ci-test-models.sh
 
       - name: Install cargo-llvm-cov
         uses: taiki-e/install-action@v2
@@ -76,7 +69,7 @@ jobs:
 
   e2e:
     runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
     needs: test
     steps:
       - uses: actions/checkout@v6
