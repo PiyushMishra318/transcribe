@@ -46,14 +46,14 @@ jobs:
   build:
     needs: prepare
     uses: ./.github/workflows/build-release-artifacts.yml
-    secrets: inherit
-    permissions:
-      contents: read
     with:
       version: ${{ needs.prepare.outputs.version }}
       ref: ${{ needs.prepare.outputs.tag }}
       upload_artifact: true
       artifact_retention_days: 1
+    secrets: inherit
+    permissions:
+      contents: read
 
   release:
     needs: [prepare, build]
