@@ -80,9 +80,9 @@ jobs:
         run: |
           set -euo pipefail
           sed -i "s/^version = \".*\"/version = \"${NEW_VERSION}\"/" Cargo.toml
+          cargo update -p episode-transcribe
           cargo fmt --all
           bash scripts/pre-push.sh
-          cargo update -p episode-transcribe
 
       - name: Commit, tag, and push (git)
         if: steps.guard.outputs.skipped != 'true'
