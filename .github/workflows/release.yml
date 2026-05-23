@@ -45,7 +45,6 @@ jobs:
 
   build:
     needs: prepare
-    continue-on-error: true
     uses: ./.github/workflows/build-release-artifacts.yml
     secrets: inherit
     permissions:
