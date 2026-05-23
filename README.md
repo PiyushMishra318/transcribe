@@ -170,7 +170,9 @@ The bot skips a run when:
 
 After bumping, CI runs `cargo fmt`, updates `Cargo.lock`, commits `chore(release): v…`, creates the annotated tag, and pushes branch + tag with **git**. Tag pushes from `GITHUB_TOKEN` do **not** start other workflows, so auto-release then dispatches **Release** via `workflow_dispatch` on the branch ref.
 
-**Backfill a missing release** (tag exists but no GitHub Release assets): open **Actions → Release → Run workflow**, choose branch `master`, and enter the tag (e.g. `v0.1.1-alpha`). Or: `gh workflow run release.yml --ref master -f tag=v0.1.1-alpha` with a token that has `actions: write`.
+**Backfill a missing release** (tag exists but no GitHub Release assets): open **Actions → Release → Run workflow**, choose branch `master`, and enter the tag (e.g. `v0.1.4-alpha`). Or: `gh workflow run release.yml --ref master -f tag=v0.1.4-alpha` with a token that has `actions: write`.
+
+**Optional `RELEASE_PAT` secret:** fine-grained PAT with `contents: write` and `actions: write`. Auto-release uses it to dispatch the Release workflow when the default `GITHUB_TOKEN` cannot (usually the default token is enough).
 
 ### Manual tag (optional)
 

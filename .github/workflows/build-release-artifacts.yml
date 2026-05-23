@@ -89,6 +89,8 @@ jobs:
           }
           Get-ChildItem $env:SHERPA_ONNX_LIB_DIR
           cargo build --release --locked --no-default-features
+          Get-ChildItem "$env:SHERPA_ONNX_LIB_DIR\*.dll" -ErrorAction SilentlyContinue |
+            Copy-Item -Destination target/release/ -Force
           ./target/release/transcribe.exe --version
 
       - name: Package Linux
@@ -123,7 +125,9 @@ jobs:
                 Copy-Item -Destination "dist/$pkg/" -Force
             }
           }
-          Compress-Archive -Path "dist/$pkg" -DestinationPath "dist/$pkg.zip"
+          $zip = "dist/$pkg.zip"
+          if (Test-Path $zip) { Remove-Item $zip -Force }
+          Compress-Archive -Path "dist/$pkg" -DestinationPath $zip
 
       - name: Package macOS
         if: matrix.runner == 'macos-latest'

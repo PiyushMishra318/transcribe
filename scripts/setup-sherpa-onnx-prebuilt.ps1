@@ -61,5 +61,8 @@ Get-ChildItem $LibDir
 $env:SHERPA_ONNX_LIB_DIR = $LibDir
 if ($env:GITHUB_ENV) {
     Add-Content -Path $env:GITHUB_ENV -Value "SHERPA_ONNX_LIB_DIR=$LibDir"
+    $pathEntry = "PATH=$LibDir"
+    if ($env:PATH) { $pathEntry = "PATH=$LibDir;$env:PATH" }
+    Add-Content -Path $env:GITHUB_ENV -Value $pathEntry
 }
 Write-Host "SHERPA_ONNX_LIB_DIR=$LibDir"

@@ -45,6 +45,7 @@ jobs:
 
   build:
     needs: prepare
+    continue-on-error: true
     uses: ./.github/workflows/build-release-artifacts.yml
     secrets: inherit
     permissions:
@@ -57,6 +58,7 @@ jobs:
 
   release:
     needs: [prepare, build]
+    if: ${{ always() && needs.prepare.result == 'success' && needs.build.result != 'cancelled' }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -84,7 +86,7 @@ jobs:
             exit 1
           fi
           if [[ ${#files[@]} -lt 3 ]]; then
-            echo "::warning::Expected 3 platform archives; found ${#files[@]}"
+            echo "::warning::Some platform builds failed; publishing ${#files[@]} archive(s)."
           fi
           ls -la "${files[@]}"
           for f in "${files[@]}"; do
