@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
   group: auto-release-${{ github.repository }}-${{ github.ref }}
@@ -99,3 +100,10 @@ jobs:
           git tag -a "${TAG_NAME}" -m "Release ${TAG_NAME}"
           git push origin HEAD:"${GITHUB_REF_NAME}"
           git push origin "${TAG_NAME}"
+
+      - name: Trigger multi-platform release build
+        if: steps.guard.outputs.skipped != 'true'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ steps.bump.outputs.tag_name }}
+        run: gh workflow run release.yml --ref "${TAG_NAME}" -f "tag=${TAG_NAME}"
