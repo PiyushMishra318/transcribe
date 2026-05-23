@@ -1,37 +1,27 @@
-name: Alpha release
+name: Release
 
 on:
+  push:
+    tags:
+      - "v*"
   workflow_dispatch:
     inputs:
       tag:
-        description: Release tag (e.g. v0.1.0-alpha)
+        description: Release tag (e.g. v0.1.0-alpha or v1.0.0)
         required: true
         default: v0.1.0-alpha
-  push:
-    tags:
-      - v*-alpha
 
 permissions:
   contents: write
 
 jobs:
-  release:
+  prepare:
     runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.meta.outputs.version }}
+      tag: ${{ steps.meta.outputs.tag }}
+      prerelease: ${{ steps.meta.outputs.prerelease }}
     steps:
-      - uses: actions/checkout@v4
-
-      - uses: dtolnay/rust-toolchain@stable
-
-      - uses: Swatinem/rust-cache@v2
-        with:
-          cache-directories: target/sherpa-onnx-prebuilt
-
-      - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y libasound2-dev pkg-config curl
-
-      - name: Install sherpa-onnx prebuilt libraries
-        run: bash scripts/setup-sherpa-onnx-prebuilt.sh
-
       - id: meta
         shell: bash
         run: |
@@ -44,15 +34,68 @@ jobs:
           VERSION="${TAG#v}"
           echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
+          if [[ "$TAG" == *-alpha ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
+
+  build:
+    needs: prepare
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            archive: tar.gz
+            asset_ext: .tar.gz
+          - runner: windows-latest
+            target: x86_64-pc-windows-msvc
+            archive: zip
+            asset_ext: .zip
+          - runner: macos-latest
+            target: aarch64-apple-darwin
+            archive: tar.gz
+            asset_ext: .tar.gz
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          # sherpa-onnx-sys links against target/sherpa-onnx-prebuilt; keep it with the cache.
+          cache-directories: target/sherpa-onnx-prebuilt
+
+      - name: Install Linux system dependencies
+        if: matrix.runner == 'ubuntu-latest'
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev pkg-config curl
+
+      - name: Install sherpa-onnx prebuilt libraries
+        if: matrix.runner != 'windows-latest'
+        shell: bash
+        run: bash scripts/setup-sherpa-onnx-prebuilt.sh
+
+      - name: Install sherpa-onnx prebuilt libraries (Windows)
+        if: matrix.runner == 'windows-latest'
+        shell: pwsh
+        run: ./scripts/setup-sherpa-onnx-prebuilt.ps1
 
       - name: Build release (CPU)
+        env:
+          SHERPA_ONNX_LIB_DIR: ${{ env.SHERPA_ONNX_LIB_DIR }}
         run: cargo build --release --locked --no-default-features
 
-      - name: Package Linux tarball
+      - name: Package Linux
+        if: matrix.runner == 'ubuntu-latest'
         shell: bash
         run: |
-          VERSION="${{ steps.meta.outputs.version }}"
-          TARGET="x86_64-unknown-linux-gnu"
+          VERSION="${{ needs.prepare.outputs.version }}"
+          TARGET="${{ matrix.target }}"
           PKG="transcribe-v${VERSION}-${TARGET}"
           mkdir -p "dist/${PKG}"
           cp target/release/transcribe "dist/${PKG}/"
@@ -62,13 +105,61 @@ jobs:
           done
           tar -C dist -czf "dist/${PKG}.tar.gz" "${PKG}"
 
-      - name: Publish GitHub pre-release
+      - name: Package Windows
+        if: matrix.runner == 'windows-latest'
+        shell: pwsh
+        run: |
+          $version = "${{ needs.prepare.outputs.version }}"
+          $target = "${{ matrix.target }}"
+          $pkg = "transcribe-v$version-$target"
+          New-Item -ItemType Directory -Force -Path "dist/$pkg" | Out-Null
+          Copy-Item target/release/transcribe.exe "dist/$pkg/"
+          Get-ChildItem target/release/*.dll | Copy-Item -Destination "dist/$pkg/"
+          Compress-Archive -Path "dist/$pkg" -DestinationPath "dist/$pkg.zip"
+
+      - name: Package macOS
+        if: matrix.runner == 'macos-latest'
+        shell: bash
+        run: |
+          VERSION="${{ needs.prepare.outputs.version }}"
+          TARGET="${{ matrix.target }}"
+          PKG="transcribe-v${VERSION}-${TARGET}"
+          mkdir -p "dist/${PKG}"
+          cp target/release/transcribe "dist/${PKG}/"
+          shopt -s nullglob
+          for lib in target/release/*.dylib; do
+            cp "$lib" "dist/${PKG}/"
+          done
+          tar -C dist -czf "dist/${PKG}.tar.gz" "${PKG}"
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ matrix.target }}
+          path: dist/*${{ matrix.asset_ext }}
+          retention-days: 1
+
+  release:
+    needs: [prepare, build]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.tag }}
+
+      - uses: actions/download-artifact@v4
+        with:
+          path: artifacts
+          merge-multiple: true
+
+      - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: ${{ steps.meta.outputs.tag }}
-          name: ${{ steps.meta.outputs.tag }}
-          prerelease: true
+          tag_name: ${{ needs.prepare.outputs.tag }}
+          name: ${{ needs.prepare.outputs.tag }}
+          target_commitish: ${{ github.sha }}
           generate_release_notes: true
-          files: dist/*.tar.gz
+          prerelease: ${{ needs.prepare.outputs.prerelease == 'true' }}
+          files: artifacts/*
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

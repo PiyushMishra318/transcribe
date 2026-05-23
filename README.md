@@ -139,22 +139,40 @@ cargo run --no-default-features -- help
 
 CI runs on push and pull requests to `main` / `master` (see [.github/workflows/ci.yml](.github/workflows/ci.yml)): `cargo fmt`, `cargo clippy`, smoke tests, coverage, and optional e2e on `main`.
 
-## Releases (alpha)
+## Releases
 
-Pre-built **Linux x86_64 CPU** binaries (`--no-default-features`, no CUDA) are published as GitHub **pre-releases** by [.github/workflows/release.yml](.github/workflows/release.yml). Each archive includes `transcribe` plus bundled `libsherpa-onnx` shared libraries.
+Pre-built **CPU** binaries (`--no-default-features`, no CUDA) for Linux, Windows, and macOS are published by [.github/workflows/release.yml](.github/workflows/release.yml). Each archive includes `transcribe` (or `transcribe.exe` on Windows) plus bundled sherpa-onnx shared libraries (`.so`, `.dll`, or `.dylib`).
 
-**Publish an alpha** — push a tag ending in `-alpha`:
+Releases are **tag-triggered only** (pushing to `main` / `master` does not publish). Use a semver tag:
+
+| Tag pattern | GitHub release |
+|-------------|----------------|
+| `v0.1.0-alpha` (ends with `-alpha`) | Pre-release |
+| `v1.0.0` | Stable release |
+
+**Publish an alpha:**
 
 ```bash
 git tag v0.1.0-alpha
 git push origin v0.1.0-alpha
 ```
 
-Or run **Actions → Alpha release → Run workflow** and set the tag (default `v0.1.0-alpha`).
+**Publish a stable release:**
 
-Asset name: `transcribe-v0.1.0-alpha-x86_64-unknown-linux-gnu.tar.gz` (version segment matches the tag without the leading `v`).
+```bash
+git tag v1.0.0
+git push origin v1.0.0
+```
 
-Extract the tarball and run `./transcribe` from the folder. You still need [ffmpeg](https://ffmpeg.org/) on `PATH` and model weights — see [models/README.md](models/README.md).
+To rebuild assets for an existing tag (e.g. a release created without artifacts), delete and re-push the tag, or run **Actions → Release → Run workflow** and enter the tag name.
+
+Asset names follow `transcribe-v{VERSION}-{TARGET}` (version is the tag without the leading `v`), for example:
+
+- `transcribe-v0.1.0-alpha-x86_64-unknown-linux-gnu.tar.gz`
+- `transcribe-v0.1.0-alpha-x86_64-pc-windows-msvc.zip`
+- `transcribe-v0.1.0-alpha-aarch64-apple-darwin.tar.gz`
+
+Extract the archive and run `transcribe` from the folder. You still need [ffmpeg](https://ffmpeg.org/) on `PATH` and model weights — see [models/README.md](models/README.md).
 
 ## Contributing
 
