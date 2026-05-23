@@ -4,15 +4,15 @@ Thank you for considering a contribution. This project is a Rust CLI for batch-t
 
 ## Before you start
 
-1. Check existing [issues](https://github.com/PiyushMishra318/transcribe/issues) for duplicates or planned work.
+1. Check existing [issues](https://github.com/your-org/transcribe/issues) for duplicates or planned work.
 2. For large changes, open an issue first so we can agree on approach.
 3. Read [README.md](README.md) for setup and [models/README.md](models/README.md) for model downloads.
 
 ## Development setup
 
 ```bash
-git clone https://github.com/PiyushMishra318/transcribe.git
-cd episode-transcribe
+git clone https://github.com/your-org/transcribe.git
+cd transcribe
 ```
 
 Install [Rust](https://rustup.rs/) (stable, 1.75+) and ensure [ffmpeg](https://ffmpeg.org/) is on your `PATH`.
@@ -48,7 +48,7 @@ TRANSCRIBE_E2E=1 cargo test --release --no-default-features -- --ignored
 2. Add your fork as a remote and create a branch:
 
    ```bash
-   git remote add fork git@github.com:YOUR_USERNAME/episode-transcribe.git
+   git remote add fork git@github.com:YOUR_USERNAME/transcribe.git
    git checkout -b short-descriptive-name
    ```
 
