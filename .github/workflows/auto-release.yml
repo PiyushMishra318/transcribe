@@ -59,9 +59,18 @@ jobs:
         with:
           components: rustfmt, clippy
 
+      - uses: Swatinem/rust-cache@v2
+        if: steps.guard.outputs.skipped != 'true'
+        with:
+          cache-directories: target/sherpa-onnx-prebuilt
+
       - name: Install Linux dependencies for pre-push
         if: steps.guard.outputs.skipped != 'true'
         run: sudo apt-get update && sudo apt-get install -y libasound2-dev pkg-config curl
+
+      - name: Setup sherpa-onnx prebuilt libs
+        if: steps.guard.outputs.skipped != 'true'
+        run: bash scripts/setup-sherpa-onnx-prebuilt.sh
 
       - name: Update version, fmt, pre-push, refresh lockfile
         if: steps.guard.outputs.skipped != 'true'

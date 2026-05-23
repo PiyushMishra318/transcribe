@@ -6,10 +6,12 @@ cd "$(dirname "$0")/.."
 echo "==> pre-push: sherpa-onnx prebuilt libs"
 case "$(uname -s)" in
   MINGW* | MSYS* | CYGWIN*)
-    pwsh -NoProfile -File scripts/setup-sherpa-onnx-prebuilt.ps1
+    # Dot-source so SHERPA_ONNX_LIB_DIR is visible to cargo in this shell.
+    pwsh -NoProfile -Command ". ./scripts/setup-sherpa-onnx-prebuilt.ps1"
     ;;
   *)
-    bash scripts/setup-sherpa-onnx-prebuilt.sh
+    # shellcheck source=scripts/setup-sherpa-onnx-prebuilt.sh
+    source scripts/setup-sherpa-onnx-prebuilt.sh
     ;;
 esac
 
