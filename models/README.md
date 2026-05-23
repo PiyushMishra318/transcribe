@@ -36,3 +36,13 @@ Auto-enabled when present.
 | `wespeaker_en_voxceleb_resnet34_LM.onnx` | [embedding model](https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-recongition-models/wespeaker_en_voxceleb_resnet34_LM.onnx) |
 
 Extract the segmentation archive so `model.onnx` lives under `models/sherpa-onnx-pyannote-segmentation-3-0/`.
+
+## CI and local smoke/coverage
+
+To fetch everything needed for `e2e_transcribe_test_clip` and coverage tests in one step:
+
+```bash
+bash scripts/download-ci-test-models.sh
+```
+
+That script downloads `ggml-base.bin`, `wespeaker_en_voxceleb_resnet34_LM.onnx`, and extracts `sherpa-onnx-pyannote-segmentation-3-0/`.

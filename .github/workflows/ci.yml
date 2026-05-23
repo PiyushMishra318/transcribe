@@ -91,11 +91,8 @@ jobs:
       - name: Setup sherpa-onnx prebuilt libs
         run: bash scripts/setup-sherpa-onnx-prebuilt.sh
 
-      - name: Download ggml-base model
-        run: |
-          mkdir -p models
-          curl -fsSL -o models/ggml-base.bin \
-            https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin
+      - name: Download test models
+        run: bash scripts/download-ci-test-models.sh
 
       - name: Build release (CPU)
         run: cargo build --release --locked --no-default-features
