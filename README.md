@@ -145,33 +145,39 @@ Pre-built **CPU** binaries (`--no-default-features`, no CUDA) for Linux, Windows
 
 | Trigger | Workflow | Output |
 |---------|----------|--------|
-| Push to `main` / `master` | [.github/workflows/build-artifacts.yml](.github/workflows/build-artifacts.yml) | [Actions artifacts](https://docs.github.com/en/actions/managing-workflow-runs/downloading-workflow-artifacts) (90-day retention), named `transcribe-{target}-{short-sha}` |
-| Push tag `v*` | [.github/workflows/release.yml](.github/workflows/release.yml) | GitHub Release with attached assets |
+| Push to `main` / `master` | [.github/workflows/auto-release.yml](.github/workflows/auto-release.yml) then [.github/workflows/release.yml](.github/workflows/release.yml) | Semver bump, `v*` tag, GitHub Release with assets |
+| Push tag `v*` (manual) | [.github/workflows/release.yml](.github/workflows/release.yml) | GitHub Release with attached assets |
+| Manual | [.github/workflows/build-artifacts.yml](.github/workflows/build-artifacts.yml) | Actions artifacts only (no GitHub Release) |
 
-**Branch pushes** package as `transcribe-v{7-char-sha}-{target}` (e.g. `transcribe-v0c8ad05-x86_64-unknown-linux-gnu.tar.gz`). Download from **Actions → Build artifacts → latest run**.
+### Automatic versioning (push to `main` / `master`)
 
-**Tagged releases** use a semver tag:
+On each push to the default branch, **auto-release** compares commits since the last `v*` tag and bumps [semver](https://semver.org/) in `Cargo.toml`:
 
-| Tag pattern | GitHub release |
-|-------------|----------------|
-| `v0.1.0-alpha` (ends with `-alpha`) | Pre-release |
-| `v1.0.0` | Stable release |
+| Bump | Example | When |
+|------|---------|------|
+| **PATCH** | `0.1.0` → `0.1.1` | `fix:`, `Fix …`, `chore:`, `docs:`, `ci:`, `build:`, `test:`, or only `.github/`, docs, `Cargo.lock`, maintenance `src/` fixes |
+| **MINOR** | `0.1.0` → `0.2.0` | `feat:` (non-breaking), or `src/` changes that are not maintenance-only |
+| **MAJOR** | `0.9.0` → `1.0.0` | `BREAKING CHANGE`, `feat!`, or `type!` conventional commits |
 
-**Publish an alpha:**
+Logic lives in [`scripts/compute-release-bump.sh`](scripts/compute-release-bump.sh) (also documented in the auto-release workflow).
 
-```bash
-git tag v0.1.0-alpha
-git push origin v0.1.0-alpha
-```
+**Pre-1.0 (alpha):** while `major == 0`, tags are `v0.x.y-alpha` and GitHub marks the release as **pre-release**. Stable `1.0.0+` uses plain `v1.0.0` tags.
 
-**Publish a stable release:**
+The bot skips a run when:
+
+- `HEAD` already has a `v*` tag (no duplicate release for the same commit)
+- the commit message starts with `chore(release):` (the version-bump commit itself)
+
+After bumping, CI runs `cargo fmt`, updates `Cargo.lock`, commits `chore(release): v…`, creates the annotated tag, and pushes branch + tag with **git** (the tag push triggers the release build).
+
+### Manual tag (optional)
 
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-To rebuild assets for an existing tag (e.g. a release created without artifacts), delete and re-push the tag, or run **Actions → Release → Run workflow** and enter the tag name.
+To rebuild assets for an existing tag, delete and re-push the tag, or run **Actions → Release → Run workflow** and enter the tag name.
 
 Asset names follow `transcribe-v{VERSION}-{TARGET}` (version is the tag without the leading `v`), for example:
 

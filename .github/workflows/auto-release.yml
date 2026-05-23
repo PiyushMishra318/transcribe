@@ -1,0 +1,92 @@
+# Auto semver release on every push to main/master (not PR branches).
+#
+# Bump rules (since last v* tag):
+#   MAJOR — BREAKING CHANGE / type! / feat! commits
+#   MINOR — feat: commits, or src/ changes without a fix/docs/ci-only prefix
+#   PATCH — fix:, chore:, docs:, ci:, build:, test:, or only .github/, docs/, *.md, Cargo.lock
+#
+# Pre-1.0: tags are v0.x.y-alpha and GitHub releases are marked prerelease.
+# Skips: commit already has a v* tag; chore(release): bot commits; empty range since last tag.
+name: Auto release
+
+on:
+  push:
+    branches: [main, master]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: auto-release-${{ github.repository }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  bump-and-tag:
+    if: >-
+      github.event_name == 'push'
+      && !startsWith(github.event.head_commit.message, 'chore(release):')
+    runs-on: ubuntu-latest
+    outputs:
+      tag_name: ${{ steps.bump.outputs.tag_name }}
+      new_version: ${{ steps.bump.outputs.new_version }}
+      bump_level: ${{ steps.bump.outputs.bump_level }}
+      skipped: ${{ steps.guard.outputs.skipped }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - name: Skip if HEAD already has a release tag
+        id: guard
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git tag --points-at HEAD | grep -qE '^v[0-9]'; then
+            echo "HEAD already tagged; skipping auto-release."
+            echo "skipped=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "skipped=false" >> "$GITHUB_OUTPUT"
+
+      - name: Compute semver bump
+        id: bump
+        if: steps.guard.outputs.skipped != 'true'
+        shell: bash
+        run: bash scripts/compute-release-bump.sh
+
+      - uses: dtolnay/rust-toolchain@stable
+        if: steps.guard.outputs.skipped != 'true'
+        with:
+          components: rustfmt, clippy
+
+      - name: Install Linux dependencies for pre-push
+        if: steps.guard.outputs.skipped != 'true'
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev pkg-config curl
+
+      - name: Update version, fmt, pre-push, refresh lockfile
+        if: steps.guard.outputs.skipped != 'true'
+        shell: bash
+        env:
+          NEW_VERSION: ${{ steps.bump.outputs.new_version }}
+        run: |
+          set -euo pipefail
+          sed -i "s/^version = \".*\"/version = \"${NEW_VERSION}\"/" Cargo.toml
+          cargo fmt --all
+          bash scripts/pre-push.sh
+          cargo update -p episode-transcribe
+
+      - name: Commit, tag, and push (git)
+        if: steps.guard.outputs.skipped != 'true'
+        shell: bash
+        env:
+          TAG_NAME: ${{ steps.bump.outputs.tag_name }}
+          NEW_VERSION: ${{ steps.bump.outputs.new_version }}
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add Cargo.toml Cargo.lock
+          git commit -m "chore(release): ${TAG_NAME}"
+          git tag -a "${TAG_NAME}" -m "Release ${TAG_NAME}"
+          git push origin HEAD:"${GITHUB_REF_NAME}"
+          git push origin "${TAG_NAME}"
