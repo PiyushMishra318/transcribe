@@ -66,12 +66,27 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - uses: Swatinem/rust-cache@v2
+        with:
+          # sherpa-onnx-sys links against target/sherpa-onnx-prebuilt; keep it with the cache.
+          cache-directories: target/sherpa-onnx-prebuilt
 
       - name: Install Linux system dependencies
         if: matrix.runner == 'ubuntu-latest'
-        run: sudo apt-get update && sudo apt-get install -y libasound2-dev pkg-config
+        run: sudo apt-get update && sudo apt-get install -y libasound2-dev pkg-config curl
+
+      - name: Install sherpa-onnx prebuilt libraries
+        if: matrix.runner != 'windows-latest'
+        shell: bash
+        run: bash scripts/setup-sherpa-onnx-prebuilt.sh
+
+      - name: Install sherpa-onnx prebuilt libraries (Windows)
+        if: matrix.runner == 'windows-latest'
+        shell: pwsh
+        run: ./scripts/setup-sherpa-onnx-prebuilt.ps1
 
       - name: Build release (CPU)
+        env:
+          SHERPA_ONNX_LIB_DIR: ${{ env.SHERPA_ONNX_LIB_DIR }}
         run: cargo build --release --locked --no-default-features
 
       - name: Package Linux
@@ -83,6 +98,10 @@ jobs:
           PKG="transcribe-v${VERSION}-${TARGET}"
           mkdir -p "dist/${PKG}"
           cp target/release/transcribe "dist/${PKG}/"
+          shopt -s nullglob
+          for lib in target/release/*.so*; do
+            cp "$lib" "dist/${PKG}/"
+          done
           tar -C dist -czf "dist/${PKG}.tar.gz" "${PKG}"
 
       - name: Package Windows
@@ -94,6 +113,7 @@ jobs:
           $pkg = "transcribe-v$version-$target"
           New-Item -ItemType Directory -Force -Path "dist/$pkg" | Out-Null
           Copy-Item target/release/transcribe.exe "dist/$pkg/"
+          Get-ChildItem target/release/*.dll | Copy-Item -Destination "dist/$pkg/"
           Compress-Archive -Path "dist/$pkg" -DestinationPath "dist/$pkg.zip"
 
       - name: Package macOS
@@ -105,6 +125,10 @@ jobs:
           PKG="transcribe-v${VERSION}-${TARGET}"
           mkdir -p "dist/${PKG}"
           cp target/release/transcribe "dist/${PKG}/"
+          shopt -s nullglob
+          for lib in target/release/*.dylib; do
+            cp "$lib" "dist/${PKG}/"
+          done
           tar -C dist -czf "dist/${PKG}.tar.gz" "${PKG}"
 
       - name: Upload artifact
