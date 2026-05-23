@@ -13,6 +13,7 @@ on:
 
 permissions:
   contents: write
+  actions: read
 
 jobs:
   prepare:
@@ -45,6 +46,9 @@ jobs:
   build:
     needs: prepare
     uses: ./.github/workflows/build-release-artifacts.yml
+    secrets: inherit
+    permissions:
+      contents: read
     with:
       version: ${{ needs.prepare.outputs.version }}
       ref: ${{ needs.prepare.outputs.tag }}
@@ -54,6 +58,9 @@ jobs:
   release:
     needs: [prepare, build]
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: read
     steps:
       - uses: actions/checkout@v6
         with:
@@ -64,14 +71,42 @@ jobs:
           path: artifacts
           merge-multiple: true
 
+      - name: Verify and list release assets
+        id: assets
+        shell: bash
+        run: |
+          set -euo pipefail
+          shopt -s globstar nullglob
+          mapfile -t files < <(find artifacts -type f \( -name '*.tar.gz' -o -name '*.zip' \) | sort)
+          if [[ ${#files[@]} -eq 0 ]]; then
+            echo "No release archives found under artifacts/"
+            find artifacts -print 2>/dev/null || true
+            exit 1
+          fi
+          if [[ ${#files[@]} -lt 3 ]]; then
+            echo "::warning::Expected 3 platform archives; found ${#files[@]}"
+          fi
+          ls -la "${files[@]}"
+          for f in "${files[@]}"; do
+            if [[ ! -s "$f" ]]; then
+              echo "Empty asset: $f"
+              exit 1
+            fi
+          done
+          {
+            echo "paths<<EOF"
+            printf '%s\n' "${files[@]}"
+            echo "EOF"
+          } >> "$GITHUB_OUTPUT"
+
       - name: Publish GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ needs.prepare.outputs.tag }}
           name: ${{ needs.prepare.outputs.tag }}
-          target_commitish: ${{ github.sha }}
+          target_commitish: ${{ needs.prepare.outputs.tag }}
           generate_release_notes: true
           prerelease: ${{ needs.prepare.outputs.prerelease == 'true' }}
-          files: artifacts/*
+          files: ${{ steps.assets.outputs.paths }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

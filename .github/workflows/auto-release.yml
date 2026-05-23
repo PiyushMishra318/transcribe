@@ -103,7 +103,14 @@ jobs:
 
       - name: Trigger multi-platform release build
         if: steps.guard.outputs.skipped != 'true'
+        shell: bash
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           TAG_NAME: ${{ steps.bump.outputs.tag_name }}
-        run: gh workflow run release.yml --ref "${TAG_NAME}" -f "tag=${TAG_NAME}"
+        run: |
+          set -euo pipefail
+          # Tags pushed by GITHUB_TOKEN do not trigger on.push tag workflows.
+          # Run Release from the branch ref so we use the latest workflow definition.
+          gh workflow run release.yml --ref "${GITHUB_REF_NAME}" -f "tag=${TAG_NAME}"
+          sleep 10
+          gh run list --workflow=release.yml --limit=5
