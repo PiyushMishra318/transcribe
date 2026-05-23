@@ -139,29 +139,22 @@ cargo run --no-default-features -- help
 
 CI runs on push and pull requests to `main` / `master` (see [.github/workflows/ci.yml](.github/workflows/ci.yml)): `cargo fmt`, `cargo clippy`, smoke tests, coverage, and optional e2e on `main`.
 
-## Releases
+## Releases (alpha)
 
-Pre-built **CPU** binaries (`--no-default-features`, no CUDA) are published automatically by [.github/workflows/release.yml](.github/workflows/release.yml).
+Pre-built **Linux x86_64 CPU** binaries (`--no-default-features`, no CUDA) are published as GitHub **pre-releases** by [.github/workflows/release.yml](.github/workflows/release.yml). Each archive includes `transcribe` plus bundled `libsherpa-onnx` shared libraries.
 
-| Trigger | What happens |
-|---------|----------------|
-| **Push to `main` or `master`** | Reads `version` from `Cargo.toml`. If git tag `v{version}` does not exist yet, builds Linux / Windows / macOS artifacts and creates a GitHub Release at that tag. Pushes that do not bump the version are skipped. |
-| **Push tag `v*`** (e.g. `v0.1.0`) | Always builds and publishes (or updates) a release for that tag. |
-
-**Bump a release:** edit `version` in `Cargo.toml`, commit, and push to `main` / `master`. The workflow tags `v{version}` and uploads:
-
-- `transcribe-v{version}-x86_64-unknown-linux-gnu.tar.gz`
-- `transcribe-v{version}-x86_64-pc-windows-msvc.zip`
-- `transcribe-v{version}-aarch64-apple-darwin.tar.gz`
-
-**Tag-only release** (without changing `Cargo.toml` on the branch):
+**Publish an alpha** — push a tag ending in `-alpha`:
 
 ```bash
-git tag v0.1.0
-git push origin v0.1.0
+git tag v0.1.0-alpha
+git push origin v0.1.0-alpha
 ```
 
-Extract the archive and run `transcribe` from the folder (still need [ffmpeg](https://ffmpeg.org/) on `PATH` and model weights — see [models/README.md](models/README.md)).
+Or run **Actions → Alpha release → Run workflow** and set the tag (default `v0.1.0-alpha`).
+
+Asset name: `transcribe-v0.1.0-alpha-x86_64-unknown-linux-gnu.tar.gz` (version segment matches the tag without the leading `v`).
+
+Extract the tarball and run `./transcribe` from the folder. You still need [ffmpeg](https://ffmpeg.org/) on `PATH` and model weights — see [models/README.md](models/README.md).
 
 ## Contributing
 
