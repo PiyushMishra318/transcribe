@@ -39,9 +39,14 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - uses: Swatinem/rust-cache@v2
+        with:
+          cache-directories: target/sherpa-onnx-prebuilt
 
       - name: Install system dependencies
-        run: sudo apt-get update && sudo apt-get install -y ffmpeg libasound2-dev pkg-config
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg libasound2-dev pkg-config curl
+
+      - name: Setup sherpa-onnx prebuilt libs
+        run: bash scripts/setup-sherpa-onnx-prebuilt.sh
 
       - name: Build (CPU)
         run: cargo build --locked --no-default-features
@@ -77,9 +82,14 @@ jobs:
       - uses: dtolnay/rust-toolchain@stable
 
       - uses: Swatinem/rust-cache@v2
+        with:
+          cache-directories: target/sherpa-onnx-prebuilt
 
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y ffmpeg curl libasound2-dev pkg-config
+
+      - name: Setup sherpa-onnx prebuilt libs
+        run: bash scripts/setup-sherpa-onnx-prebuilt.sh
 
       - name: Download ggml-base model
         run: |

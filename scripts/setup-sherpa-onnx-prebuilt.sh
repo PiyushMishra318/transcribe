@@ -91,3 +91,30 @@ fi
 
 export SHERPA_ONNX_LIB_DIR="${LIB_DIR}"
 echo "SHERPA_ONNX_LIB_DIR=${SHERPA_ONNX_LIB_DIR}"
+
+# Link-time rpath points at the prebuilt tree; debug smoke tests and assert_cmd need the loader path too
+# (rust-cache can restore target/debug/transcribe without colocated .so copies).
+case "${OS}" in
+  Linux)
+    if [[ -n "${LD_LIBRARY_PATH:-}" ]]; then
+      export LD_LIBRARY_PATH="${LIB_DIR}:${LD_LIBRARY_PATH}"
+    else
+      export LD_LIBRARY_PATH="${LIB_DIR}"
+    fi
+    if [[ -n "${GITHUB_ENV:-}" ]]; then
+      echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}" >>"${GITHUB_ENV}"
+    fi
+    echo "LD_LIBRARY_PATH=${LD_LIBRARY_PATH}"
+    ;;
+  Darwin)
+    if [[ -n "${DYLD_LIBRARY_PATH:-}" ]]; then
+      export DYLD_LIBRARY_PATH="${LIB_DIR}:${DYLD_LIBRARY_PATH}"
+    else
+      export DYLD_LIBRARY_PATH="${LIB_DIR}"
+    fi
+    if [[ -n "${GITHUB_ENV:-}" ]]; then
+      echo "DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}" >>"${GITHUB_ENV}"
+    fi
+    echo "DYLD_LIBRARY_PATH=${DYLD_LIBRARY_PATH}"
+    ;;
+esac
