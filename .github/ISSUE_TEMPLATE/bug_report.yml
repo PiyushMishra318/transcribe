@@ -1,0 +1,95 @@
+name: Bug report
+description: Something is broken or behaves unexpectedly
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. Please fill in what you can; screenshots and logs help.
+
+  - type: textarea
+    id: description
+    attributes:
+      label: What happened?
+      description: A clear description of the bug.
+      placeholder: transcribe run . fails with ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      placeholder: Subtitles should be written next to the MP4.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: Commands and inputs that trigger the issue.
+      placeholder: |
+        1. cd /path/to/campaign
+        2. transcribe run .
+        3. See error
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: transcribe version
+      description: Output of `transcribe --version`
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - Linux
+        - macOS
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: rust
+    attributes:
+      label: Rust version (if building from source)
+      description: Output of `rustc --version`, if applicable
+      placeholder: rustc 1.75.0 (...)
+
+  - type: dropdown
+    id: build
+    attributes:
+      label: Build type
+      options:
+        - CPU only (--no-default-features)
+        - CUDA (default on Windows)
+        - Installed via install script
+        - Unknown
+    validations:
+      required: true
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs or error output
+      description: Paste relevant terminal output. Redact paths if needed.
+      render: shell
+
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      options:
+        - label: I searched existing issues for duplicates
+          required: true
+        - label: I can reproduce this on the latest commit from main
+          required: false

@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Format
+        run: cargo fmt --all -- --check
+
+      - name: Clippy
+        run: cargo clippy --locked --no-default-features -- -D warnings
+
+  test:
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install system dependencies
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg
+
+      - name: Build (CPU)
+        run: cargo build --locked --no-default-features
+
+      - name: CLI smoke tests
+        run: cargo test --locked --no-default-features
+
+      - name: Download test models
+        run: |
+          mkdir -p models/sherpa-onnx-pyannote-segmentation-3-0
+          curl -fsSL -o models/ggml-base.bin \
+            https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin
+          curl -fsSL -o models/wespeaker_en_voxceleb_resnet34_LM.onnx \
+            https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-recongition-models/wespeaker_en_voxceleb_resnet34_LM.onnx
+          curl -fsSL -o models/sherpa-onnx-pyannote-segmentation-3-0/model.onnx \
+            https://github.com/k2-fsa/sherpa-onnx/releases/download/speaker-segmentation-models/sherpa-onnx-pyannote-segmentation-3-0/model.onnx
+
+      - name: Install cargo-llvm-cov
+        uses: taiki-e/install-action@v2
+        with:
+          tool: cargo-llvm-cov
+
+      - name: Code coverage
+        run: |
+          cargo llvm-cov --locked --no-default-features --release --fail-under-lines 85 -- --include-ignored
+
+      - name: Help and version
+        run: |
+          ./target/debug/transcribe --version
+          ./target/debug/transcribe help
+          ./target/debug/transcribe help run | head -5
+
+  e2e:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: test
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y ffmpeg curl
+
+      - name: Download ggml-base model
+        run: |
+          mkdir -p models
+          curl -fsSL -o models/ggml-base.bin \
+            https://huggingface.co/ggerganov/whisper.cpp/resolve/main/ggml-base.bin
+
+      - name: Build release (CPU)
+        run: cargo build --release --locked --no-default-features
+
+      - name: E2E transcribe test clip
+        env:
+          TRANSCRIBE_MODELS_DIR: ${{ github.workspace }}/models
+        run: cargo test --release --locked --no-default-features e2e_transcribe_test_clip -- --ignored

@@ -1,0 +1,40 @@
+/target/
+**/*.rs.bk
+*.profraw
+*.profdata
+coverage/
+
+# Whisper / speaker model weights (download separately)
+models/*.bin
+models/*.onnx
+models/sherpa-onnx*/
+
+# Generated per-episode outputs (next to MP4s)
+**/*.txt
+**/*.srt
+**/*.ass
+!README.md
+!**/README.md
+
+# Voice profile build artifacts (per campaign folder)
+voices/
+**/voices/clips/
+**/voices/profiles.json
+**/voices/build_state.json
+**/voices/review.html
+
+# Bundled test fixtures (sample.mp4 + golden transcripts)
+test/*.wav
+test/*.ogv
+!test/sample.txt
+!test/sample.srt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# FFmpeg temp
+*.wav.tmp
