@@ -26,7 +26,7 @@ jobs:
             target: aarch64-apple-darwin
             asset_ext: .tar.gz
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
 
       - id: version
         shell: bash
