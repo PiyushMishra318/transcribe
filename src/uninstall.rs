@@ -1,9 +1,9 @@
 use crate::db::transcribe_home;
 use anyhow::{bail, Context, Result};
 use std::fs;
-use std::path::PathBuf;
 #[cfg(windows)]
 use std::path::Path;
+use std::path::PathBuf;
 
 #[cfg(windows)]
 const INSTALL_DIR_NAME: &str = "episode-transcribe";
