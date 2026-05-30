@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="description" content="Batch-transcribe tabletop episode MP4s into SRT, TXT, and optional speaker-tagged ASS subtitles using whisper.cpp and sherpa-onnx diarization." />
+  <title>Episode Transcribe</title>
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <header class="header"><div class="header__inner">
+    <span class="badge">Rust · whisper.cpp</span>
+    <h1>Episode Transcribe</h1>
+    <p>Batch-transcribe tabletop episode MP4s into SRT, TXT, and optional speaker-tagged ASS subtitles using whisper.cpp and sherpa-onnx diarization.</p>
+  </div></header>
+  <main class="main"><section class="card"><h2>Features</h2><ul><li>Directory-oriented CLI — outputs next to each video</li><li>CPU or CUDA builds via install scripts</li><li>Speaker diarization with sherpa-onnx</li></ul><div class="actions"><a class="btn" href="https://github.com/PiyushMishra318/transcribe/releases">Releases</a><a class="btn btn--ghost" href="https://github.com/PiyushMishra318/transcribe">Source</a></div></section><section class="card"><h2>Install</h2><pre>git clone https://github.com/PiyushMishra318/transcribe.git
+powershell -File scripts/install.ps1   # Windows GPU
+./scripts/install.sh --cpu-only      # Linux/macOS</pre></section></main>
+  <footer class="footer"><p>MIT © 2026 · <a href="https://piyushm.dev">piyushm.dev</a></p></footer>
+</body>
+</html>
