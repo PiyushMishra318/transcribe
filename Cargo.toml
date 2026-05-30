@@ -26,7 +26,7 @@ anyhow = "1"
 chrono = { version = "0.4", default-features = false, features = ["clock", "std"] }
 clap = { version = "4", features = ["derive"] }
 dialoguer = "0.11"
-directories = "5"
+directories = "6"
 hound = "3"
 rodio = { version = "0.19", default-features = false, features = ["wav"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
