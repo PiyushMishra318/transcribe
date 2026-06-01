@@ -1,23 +1,30 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;600&family=Karla:wght@400;600&display=swap" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <meta name="description" content="Batch-transcribe tabletop episode MP4s into SRT, TXT, and optional speaker-tagged ASS subtitles using whisper.cpp and sherpa-onnx diarization." />
   <title>Episode Transcribe</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
-<body class="theme-transcribe">
+<body class="theme-transcribe portfolio-designed landing-page">
   <div class="bg-animation" aria-hidden="true"></div>
-  <header class="header">
-    <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle color theme" title="Toggle theme"><span class="theme-toggle__icon theme-toggle__icon--sun" aria-hidden="true">&#9728;</span><span class="theme-toggle__icon theme-toggle__icon--moon" aria-hidden="true">&#9789;</span></button><div class="header__inner">
+  <header class="header landing-hero">
+        <div class="header__top">
+      <a class="header__brand" href="https://piyushm.dev">piyushm.dev</a>
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle color theme" title="Toggle theme"><span class="theme-toggle__icon theme-toggle__icon--sun" aria-hidden="true">&#9728;</span><span class="theme-toggle__icon theme-toggle__icon--moon" aria-hidden="true">&#9789;</span></button>
+    </div>
+<div class="header__inner">
     <span class="badge">Rust · whisper.cpp</span>
     <h1>Episode Transcribe</h1>
     <p>Batch-transcribe tabletop episode MP4s into SRT, TXT, and optional speaker-tagged ASS subtitles using whisper.cpp and sherpa-onnx diarization.</p>
   
       <a class="header__github" href="https://github.com/PiyushMishra318/transcribe" target="_blank" rel="noopener noreferrer">View on GitHub</a>
     </div></header>
-  <main class="page-main main"><section class="card"><h2>Features</h2><ul><li>Directory-oriented CLI — outputs next to each video</li><li>CPU or CUDA builds via install scripts</li><li>Speaker diarization with sherpa-onnx</li></ul><div class="actions"><a class="btn" href="https://github.com/PiyushMishra318/transcribe/releases">Releases</a><a class="btn btn--ghost" href="https://github.com/PiyushMishra318/transcribe">Source</a></div></section><section class="card"><h2>Install</h2><pre>git clone https://github.com/PiyushMishra318/transcribe.git
+  <main class="page-main main"><section class="card"><h2>Features</h2><div class="feature-grid"><div class="feature-tile"><strong>Directory-oriented CLI</strong><span>outputs next to each video</span></div><div class="feature-tile"><strong>CPU or CUDA builds via install scripts</strong><span></span></div><div class="feature-tile"><strong>Speaker diarization with sherpa-onnx</strong><span></span></div></div><div class="actions"><a class="btn" href="https://github.com/PiyushMishra318/transcribe/releases">Releases</a><a class="btn btn--ghost" href="https://github.com/PiyushMishra318/transcribe">Source</a></div></section><section class="card"><h2>Install</h2><pre>git clone https://github.com/PiyushMishra318/transcribe.git
 powershell -File scripts/install.ps1   # Windows GPU
 ./scripts/install.sh --cpu-only      # Linux/macOS</pre></section></main>
   <footer class="site-footer footer"><p>MIT © 2026 · <a href="https://piyushm.dev">piyushm.dev</a> · <a href="https://github.com/PiyushMishra318/transcribe" target="_blank" rel="noopener noreferrer">View on GitHub</a></p></footer>
