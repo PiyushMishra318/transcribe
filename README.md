@@ -1,5 +1,9 @@
 # Episode Transcribe
 
+**Live overview:** https://transcribe-wine.vercel.app
+
+> `transcribe.vercel.app` is used by another Vercel project (not this repo). Use the **wine** URL above.
+
 Batch-transcribe tabletop / actual-play episode MP4s into subtitles (`.srt`, `.txt`, optional speaker-tagged `.ass`) using [whisper.cpp](https://github.com/ggerganov/whisper.cpp) and [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) speaker diarization.
 
 The CLI is **directory-oriented**: install once, then `cd` into whichever folder contains your source MP4s. That folder is the source — outputs are written next to each video.
