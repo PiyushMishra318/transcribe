@@ -1,49 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Episode Transcribe — subtitles for actual-play sessions</title>
+  <meta name="description" content="Turn tabletop session recordings into searchable subtitles. Batch-transcribe MP4 folders into captions beside each file — ready for YouTube, notes, and your campaign archive." />
+  <meta name="theme-color" content="#0a0907" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;600&family=Karla:wght@400;600&display=swap" />
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Batch-transcribe tabletop actual-play episodes into SRT, TXT, and speaker-tagged subtitles. Drop MP4s in a folder, get captions beside each file." />
-  <title>Episode Transcribe</title>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Karla:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" />
   <link rel="stylesheet" href="/styles.css" />
 </head>
-<body class="theme-transcribe portfolio-designed landing-v2 landing-page">
+<body class="theme-transcribe landing-v2">
   <div class="bg-animation" aria-hidden="true"></div>
+  <div class="grain" aria-hidden="true"></div>
+
   <header class="header landing-hero landing-hero--split">
-        <div class="header__top">
+    <div class="header__top">
       <a class="header__brand" href="https://piyushm.dev">piyushm.dev</a>
-      <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle color theme" title="Toggle theme"><span class="theme-toggle__icon theme-toggle__icon--sun" aria-hidden="true">&#9728;</span><span class="theme-toggle__icon theme-toggle__icon--moon" aria-hidden="true">&#9789;</span></button>
+      <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle color theme" title="Toggle theme">
+        <span class="theme-toggle__icon theme-toggle__icon--sun" aria-hidden="true">&#9728;</span>
+        <span class="theme-toggle__icon theme-toggle__icon--moon" aria-hidden="true">&#9789;</span>
+      </button>
     </div>
-<div class="header__inner">
-    <span class="badge">Tabletop actual-play</span>
-    <h1>Episode Transcribe</h1>
-    <p>Drop a folder of session MP4s and get SRT, TXT, and optional speaker-tagged ASS subtitles beside each file — built for GMs and editors archiving actual-play campaigns.</p>
-  
-      <a class="header__github" href="https://github.com/PiyushMishra318/transcribe" target="_blank" rel="noopener noreferrer">View on GitHub</a>
-    </div><aside class="hero-panel hero-panel--terminal" aria-hidden="true">
-      <span class="hero-panel__label">Preview</span>
-      <pre class="hero-panel__content">episode_04.mp4 →
-  episode_04.srt
-  episode_04.txt
-  episode_04.ass (diarized)</pre>
+
+    <div class="header__inner hero-copy">
+      <p class="eyebrow">Actual-play · Campaign archives</p>
+      <span class="badge">Desktop app · Windows first</span>
+      <h1><span class="h1-accent">Episode Transcribe</span></h1>
+      <p class="lead">Drop a folder of session recordings and wake up to subtitles beside every episode — timed captions for uploads, plain text for notes, and optional speaker labels when your table uses multiple mics.</p>
+      <div class="hero-cta links">
+        <a class="btn btn-primary" href="https://github.com/PiyushMishra318/transcribe/releases/latest" id="release-link">Download for Windows</a>
+        <a class="btn btn-secondary" href="https://github.com/PiyushMishra318/transcribe" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+      </div>
+    </div>
+
+    <aside class="hero-panel hero-panel--shelf" aria-labelledby="hero-panel-title">
+      <p id="hero-panel-title" class="hero-panel__label">Beside each episode</p>
+      <ul class="hero-panel__library" aria-hidden="true">
+        <li class="hero-panel__row">
+          <span class="hero-panel__thumb" aria-hidden="true"></span>
+          <span class="hero-panel__meta">
+            <strong>session_04.mp4</strong>
+            <span>4h 12m · Season two</span>
+          </span>
+          <span class="hero-panel__chip">SRT</span>
+        </li>
+        <li class="hero-panel__row">
+          <span class="hero-panel__thumb hero-panel__thumb--alt" aria-hidden="true"></span>
+          <span class="hero-panel__meta">
+            <strong>session_05.mp4</strong>
+            <span>3h 48m · Ready to upload</span>
+          </span>
+          <span class="hero-panel__chip hero-panel__chip--muted">TXT</span>
+        </li>
+        <li class="hero-panel__row">
+          <span class="hero-panel__thumb hero-panel__thumb--warm" aria-hidden="true"></span>
+          <span class="hero-panel__meta">
+            <strong>session_06.mp4</strong>
+            <span>Multi-mic · Speaker tags</span>
+          </span>
+          <span class="hero-panel__chip">ASS</span>
+        </li>
+      </ul>
+      <div class="hero-panel__glow" aria-hidden="true"></div>
     </aside>
   </header>
-  <main class="page-main main">
-    <div class="stat-strip"><div class="stat-strip__item"><span class="stat-strip__value">Folder in</span><span class="stat-strip__label">Point at any campaign directory</span></div><div class="stat-strip__item"><span class="stat-strip__value">Subs out</span><span class="stat-strip__label">SRT, TXT, ASS beside each MP4</span></div><div class="stat-strip__item"><span class="stat-strip__value">Speakers</span><span class="stat-strip__label">Optional diarized ASS tracks</span></div></div>
-    <section class="card"><p class="section-title">Capabilities</p><div class="feature-grid"><div class="feature-tile"><strong>Directory CLI</strong><span>Outputs land beside each video file — no project setup per episode.</span></div><div class="feature-tile"><strong>Batch overnight</strong><span>Transcribe a whole season while you sleep.</span></div><div class="feature-tile"><strong>Speaker tags</strong><span>Know who said what in multi-mic recordings.</span></div></div></section>
-    <section class="card"><p class="section-title">How it works</p><div class="workflow"><div class="workflow__step"><div><strong>Install once</strong><span>One command on Windows, Linux, or macOS.</span></div></div><div class="workflow__step"><div><strong>Drop MP4s</strong><span>Put episode files in any folder.</span></div></div><div class="workflow__step"><div><strong>Run transcribe</strong><span>Get subtitle files next to each video.</span></div></div></div></section>
-    
-    <section class="cta-band">
-      <div><strong>Ready to try it?</strong><p>This page shows what Episode Transcribe does — install locally for the full CLI on your machine.</p></div>
-      <div class="actions"><a class="btn" href="https://github.com/PiyushMishra318/transcribe/releases">Download releases</a><a class="btn btn--ghost" href="https://github.com/PiyushMishra318/transcribe">Source</a></div>
-    </section>
-    <section class="card"><p class="section-title">Quick start</p><pre>git clone https://github.com/PiyushMishra318/transcribe.git
-powershell -File scripts/install.ps1</pre></section>
+
+  <main class="page-main">
+    <p class="section-title">Built for your table</p>
+    <div class="feature-grid">
+      <article class="feature-tile feature-tile--1">
+        <span class="feature-tile__glyph" aria-hidden="true">01</span>
+        <strong>Batch a whole season</strong>
+        <span>Point at your campaign folder and let subtitles appear beside every episode — no per-session project files or manual exports.</span>
+      </article>
+      <article class="feature-tile feature-tile--2">
+        <span class="feature-tile__glyph" aria-hidden="true">02</span>
+        <strong>Publish-ready captions</strong>
+        <span>Timed SRT files drop straight into YouTube or your editor so viewers get closed captions without retyping four-hour sessions.</span>
+      </article>
+      <article class="feature-tile feature-tile--3">
+        <span class="feature-tile__glyph" aria-hidden="true">03</span>
+        <strong>Searchable archives</strong>
+        <span>Plain-text transcripts live next to each recording — find a ruling, a lore drop, or a player quip without scrubbing through video.</span>
+      </article>
+      <article class="feature-tile feature-tile--4">
+        <span class="feature-tile__glyph" aria-hidden="true">04</span>
+        <strong>Speaker labels when it matters</strong>
+        <span>When your table records on separate mics, optional tagged captions show who said what across the party.</span>
+      </article>
+    </div>
+
+    <div class="cta-band">
+      <div>
+        <strong>Ready to caption your campaign?</strong>
+        <p>Install on your machine, drop in a folder of session recordings, and your subtitles stay on your disk — private audio never leaves your PC.</p>
+      </div>
+      <a class="btn btn-primary" href="https://github.com/PiyushMishra318/transcribe/releases/latest" id="release-link-cta">Get the app</a>
+    </div>
   </main>
-  <footer class="site-footer footer"><p>MIT © 2026 · <a href="https://piyushm.dev">piyushm.dev</a> · <a href="https://github.com/PiyushMishra318/transcribe" target="_blank" rel="noopener noreferrer">View on GitHub</a></p></footer>
+
+  <footer class="site-footer footer">
+    <p>MIT © 2026 · <a href="https://piyushm.dev">piyushm.dev</a> · <a href="https://github.com/PiyushMishra318/transcribe">GitHub</a> · <a href="https://github.com/PiyushMishra318/transcribe#install">Install guide</a></p>
+  </footer>
+
+  <script>
+    fetch("https://api.github.com/repos/PiyushMishra318/transcribe/releases/latest")
+      .then(function (r) { return r.ok ? r.json() : null; })
+      .then(function (rel) {
+        if (!rel || !rel.html_url) return;
+        var links = document.querySelectorAll("#release-link, #release-link-cta");
+        for (var i = 0; i < links.length; i++) links[i].href = rel.html_url;
+      })
+      .catch(function () {});
+  </script>
   <script src="/theme.js"></script>
 </body>
 </html>

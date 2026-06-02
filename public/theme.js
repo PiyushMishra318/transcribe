@@ -1,5 +1,5 @@
 (function () {
-  var STORAGE_KEY = "portfolio-theme";
+  var STORAGE_KEY = "transcribe-theme";
   var root = document.documentElement;
   function systemDark() {
     return window.matchMedia("(prefers-color-scheme: dark)").matches;
