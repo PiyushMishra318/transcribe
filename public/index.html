@@ -6,27 +6,43 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Literata:opsz,wght@7..72,400;600&family=Karla:wght@400;600&display=swap" />
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <meta name="description" content="Batch-transcribe tabletop episode MP4s into SRT, TXT, and optional speaker-tagged ASS subtitles using whisper.cpp and sherpa-onnx diarization." />
+  <meta name="description" content="Batch-transcribe tabletop actual-play episodes into SRT, TXT, and speaker-tagged subtitles. Drop MP4s in a folder, get captions beside each file." />
   <title>Episode Transcribe</title>
   <link rel="stylesheet" href="/styles.css" />
 </head>
-<body class="theme-transcribe portfolio-designed landing-page">
+<body class="theme-transcribe portfolio-designed landing-v2 landing-page">
   <div class="bg-animation" aria-hidden="true"></div>
-  <header class="header landing-hero">
+  <header class="header landing-hero landing-hero--split">
         <div class="header__top">
       <a class="header__brand" href="https://piyushm.dev">piyushm.dev</a>
       <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle color theme" title="Toggle theme"><span class="theme-toggle__icon theme-toggle__icon--sun" aria-hidden="true">&#9728;</span><span class="theme-toggle__icon theme-toggle__icon--moon" aria-hidden="true">&#9789;</span></button>
     </div>
 <div class="header__inner">
-    <span class="badge">Rust · whisper.cpp</span>
+    <span class="badge">Tabletop actual-play</span>
     <h1>Episode Transcribe</h1>
-    <p>Batch-transcribe tabletop episode MP4s into SRT, TXT, and optional speaker-tagged ASS subtitles using whisper.cpp and sherpa-onnx diarization.</p>
+    <p>Drop a folder of session MP4s and get SRT, TXT, and optional speaker-tagged ASS subtitles beside each file — built for GMs and editors archiving actual-play campaigns.</p>
   
       <a class="header__github" href="https://github.com/PiyushMishra318/transcribe" target="_blank" rel="noopener noreferrer">View on GitHub</a>
-    </div></header>
-  <main class="page-main main"><section class="card"><h2>Features</h2><div class="feature-grid"><div class="feature-tile"><strong>Directory-oriented CLI</strong><span>outputs next to each video</span></div><div class="feature-tile"><strong>CPU or CUDA builds via install scripts</strong><span></span></div><div class="feature-tile"><strong>Speaker diarization with sherpa-onnx</strong><span></span></div></div><div class="actions"><a class="btn" href="https://github.com/PiyushMishra318/transcribe/releases">Releases</a><a class="btn btn--ghost" href="https://github.com/PiyushMishra318/transcribe">Source</a></div></section><section class="card"><h2>Install</h2><pre>git clone https://github.com/PiyushMishra318/transcribe.git
-powershell -File scripts/install.ps1   # Windows GPU
-./scripts/install.sh --cpu-only      # Linux/macOS</pre></section></main>
+    </div><aside class="hero-panel hero-panel--terminal" aria-hidden="true">
+      <span class="hero-panel__label">Preview</span>
+      <pre class="hero-panel__content">episode_04.mp4 →
+  episode_04.srt
+  episode_04.txt
+  episode_04.ass (diarized)</pre>
+    </aside>
+  </header>
+  <main class="page-main main">
+    <div class="stat-strip"><div class="stat-strip__item"><span class="stat-strip__value">Folder in</span><span class="stat-strip__label">Point at any campaign directory</span></div><div class="stat-strip__item"><span class="stat-strip__value">Subs out</span><span class="stat-strip__label">SRT, TXT, ASS beside each MP4</span></div><div class="stat-strip__item"><span class="stat-strip__value">Speakers</span><span class="stat-strip__label">Optional diarized ASS tracks</span></div></div>
+    <section class="card"><p class="section-title">Capabilities</p><div class="feature-grid"><div class="feature-tile"><strong>Directory CLI</strong><span>Outputs land beside each video file — no project setup per episode.</span></div><div class="feature-tile"><strong>Batch overnight</strong><span>Transcribe a whole season while you sleep.</span></div><div class="feature-tile"><strong>Speaker tags</strong><span>Know who said what in multi-mic recordings.</span></div></div></section>
+    <section class="card"><p class="section-title">How it works</p><div class="workflow"><div class="workflow__step"><div><strong>Install once</strong><span>One command on Windows, Linux, or macOS.</span></div></div><div class="workflow__step"><div><strong>Drop MP4s</strong><span>Put episode files in any folder.</span></div></div><div class="workflow__step"><div><strong>Run transcribe</strong><span>Get subtitle files next to each video.</span></div></div></div></section>
+    
+    <section class="cta-band">
+      <div><strong>Ready to try it?</strong><p>This page shows what Episode Transcribe does — install locally for the full CLI on your machine.</p></div>
+      <div class="actions"><a class="btn" href="https://github.com/PiyushMishra318/transcribe/releases">Download releases</a><a class="btn btn--ghost" href="https://github.com/PiyushMishra318/transcribe">Source</a></div>
+    </section>
+    <section class="card"><p class="section-title">Quick start</p><pre>git clone https://github.com/PiyushMishra318/transcribe.git
+powershell -File scripts/install.ps1</pre></section>
+  </main>
   <footer class="site-footer footer"><p>MIT © 2026 · <a href="https://piyushm.dev">piyushm.dev</a> · <a href="https://github.com/PiyushMishra318/transcribe" target="_blank" rel="noopener noreferrer">View on GitHub</a></p></footer>
   <script src="/theme.js"></script>
 </body>
