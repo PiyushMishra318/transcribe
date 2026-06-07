@@ -4,10 +4,15 @@ use episode_transcribe::cli::run_from;
 use episode_transcribe::paths::{default_models_dir, discover_videos, resolve_working_path};
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Mutex;
 use tempfile::TempDir;
+
+static ENV_LOCK: Mutex<()> = Mutex::new(());
 
 #[test]
 fn paths_sibling_layout() {
+    let _guard = ENV_LOCK.lock().unwrap();
+    std::env::remove_var("TRANSCRIBE_MODELS_DIR");
     let tmp = TempDir::new().unwrap();
     fs::create_dir_all(tmp.path().join("transcribe/models")).unwrap();
     fs::create_dir_all(tmp.path().join("campaign")).unwrap();
@@ -20,6 +25,7 @@ fn paths_sibling_layout() {
 
 #[test]
 fn paths_transcribe_models_env() {
+    let _guard = ENV_LOCK.lock().unwrap();
     let tmp = TempDir::new().unwrap();
     std::env::set_var("TRANSCRIBE_MODELS_DIR", tmp.path());
     let _ = default_models_dir().unwrap();
@@ -41,6 +47,7 @@ fn resolve_missing_path_errors() {
 
 #[test]
 fn run_transcribe_whisper_failure_marks_error() {
+    let _guard = ENV_LOCK.lock().unwrap();
     let models = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("models/ggml-base.bin");
     if !models.is_file() || models.metadata().map(|m| m.len()).unwrap_or(0) < 1_000_000 {
         return;

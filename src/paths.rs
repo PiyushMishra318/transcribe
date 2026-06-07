@@ -44,10 +44,16 @@ fn models_beside_executable() -> Option<PathBuf> {
 /// Campaign folder sitting next to a `transcribe/` clone (e.g. Lunarfold + transcribe/).
 fn sibling_transcribe_models() -> Option<PathBuf> {
     let cwd = std::env::current_dir().ok()?;
-    for sub in ["transcribe/models", "episode-transcribe/models"] {
-        let candidate = cwd.join(sub);
-        if candidate.is_dir() {
-            return candidate.canonicalize().ok();
+    let mut roots = vec![cwd.clone()];
+    if let Some(parent) = cwd.parent() {
+        roots.push(parent.to_path_buf());
+    }
+    for root in roots {
+        for sub in ["transcribe/models", "episode-transcribe/models"] {
+            let candidate = root.join(sub);
+            if candidate.is_dir() {
+                return candidate.canonicalize().ok();
+            }
         }
     }
     None
