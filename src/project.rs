@@ -87,13 +87,13 @@ fn print_project_details(db: &Database, project: &Project) -> Result<()> {
     let episode_count: usize = db.conn.query_row(
         "SELECT COUNT(*) FROM episodes WHERE project_id = ?1",
         [project.id],
-        |row| row.get(0),
-    )?;
+        |row| row.get::<_, i64>(0),
+    )? as usize;
     let transcribed: usize = db.conn.query_row(
         "SELECT COUNT(*) FROM episodes WHERE project_id = ?1 AND transcribed_at IS NOT NULL",
         [project.id],
-        |row| row.get(0),
-    )?;
+        |row| row.get::<_, i64>(0),
+    )? as usize;
     eprintln!("  episodes: {transcribed}/{episode_count} transcribed");
     Ok(())
 }
