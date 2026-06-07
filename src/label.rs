@@ -171,7 +171,7 @@ fn play_wav(path: &Path) -> Result<()> {
 
     let handle = rodio::DeviceSinkBuilder::open_default_sink()
         .context("open audio output (try --no-play)")?;
-    let player = rodio::Player::connect_new(&handle.mixer());
+    let player = rodio::Player::connect_new(handle.mixer());
     let channels = NonZero::new(spec.channels).context("zero audio channels")?;
     let sample_rate = NonZero::new(spec.sample_rate).context("zero sample rate")?;
     let source = rodio::buffer::SamplesBuffer::new(channels, sample_rate, samples);
