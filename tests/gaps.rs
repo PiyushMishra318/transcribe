@@ -11,8 +11,10 @@ fn paths_sibling_layout() {
     let tmp = TempDir::new().unwrap();
     fs::create_dir_all(tmp.path().join("transcribe/models")).unwrap();
     fs::create_dir_all(tmp.path().join("campaign")).unwrap();
+    let prev = std::env::current_dir().unwrap();
     std::env::set_current_dir(tmp.path().join("campaign")).unwrap();
     let dir = default_models_dir().unwrap();
+    let _ = std::env::set_current_dir(prev);
     assert!(dir.ends_with("models"));
 }
 
