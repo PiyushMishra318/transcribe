@@ -1,6 +1,6 @@
 [package]
 name = "episode-transcribe"
-version = "0.1.18"
+version = "0.1.20"
 edition = "2021"
 description = "Batch-transcribe tabletop episode MP4s with Whisper and speaker diarization"
 readme = "README.md"
@@ -29,7 +29,6 @@ dialoguer = "0.12"
 directories = "6"
 hound = "3"
 rodio = { version = "0.22", default-features = false, features = ["playback", "wav"] }
-rusqlite = { version = "0.32", features = ["bundled"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # Shared libs avoid MT/MD clash with whisper-rs on Windows (static sherpa is /MT).

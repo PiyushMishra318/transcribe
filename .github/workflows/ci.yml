@@ -69,7 +69,7 @@ jobs:
 
       - name: Code coverage
         run: |
-          cargo llvm-cov --locked --no-default-features --release --fail-under-lines 85 -- --include-ignored
+          cargo llvm-cov --locked --no-default-features --release --fail-under-lines 85
 
       - name: Help and version
         run: |

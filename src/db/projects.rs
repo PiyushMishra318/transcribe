@@ -177,13 +177,13 @@ impl Database {
         let total: usize = self.conn.query_row(
             "SELECT COUNT(*) FROM profiles WHERE project_id = ?1",
             [project_id],
-            |row| row.get(0),
-        )?;
+            |row| row.get::<_, i64>(0),
+        )? as usize;
         let labeled: usize = self.conn.query_row(
             "SELECT COUNT(*) FROM profiles WHERE project_id = ?1 AND labeled = 1",
             [project_id],
-            |row| row.get(0),
-        )?;
+            |row| row.get::<_, i64>(0),
+        )? as usize;
         Ok((labeled, total))
     }
 
