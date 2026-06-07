@@ -2,7 +2,6 @@ use crate::db::{open_db, require_project, sync_profiles};
 use crate::voice::{profiles, ProfileStore};
 use anyhow::{Context, Result};
 use dialoguer::{theme::ColorfulTheme, Input};
-use rodio::Sink;
 use std::io::{self, Write};
 use std::num::NonZero;
 use std::path::{Path, PathBuf};
@@ -170,14 +169,14 @@ fn play_wav(path: &Path) -> Result<()> {
         .map(|s| s as f32 / i16::MAX as f32)
         .collect();
 
-    let (_stream, stream_handle) =
-        rodio::OutputStream::try_default().context("open audio output (try --no-play)")?;
-    let sink = Sink::try_new(&stream_handle).context("create audio sink")?;
+    let handle = rodio::DeviceSinkBuilder::open_default_sink()
+        .context("open audio output (try --no-play)")?;
+    let player = rodio::Player::connect_new(&handle.mixer());
     let channels = NonZero::new(spec.channels).context("zero audio channels")?;
     let sample_rate = NonZero::new(spec.sample_rate).context("zero sample rate")?;
     let source = rodio::buffer::SamplesBuffer::new(channels, sample_rate, samples);
-    sink.append(source);
-    sink.sleep_until_end();
+    player.append(source);
+    player.sleep_until_end();
     Ok(())
 }
 
