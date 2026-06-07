@@ -1,6 +1,6 @@
 [package]
 name = "episode-transcribe"
-version = "0.1.20"
+version = "0.1.21"
 edition = "2021"
 description = "Batch-transcribe tabletop episode MP4s with Whisper and speaker diarization"
 readme = "README.md"
