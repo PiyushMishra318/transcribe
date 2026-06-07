@@ -1,8 +1,13 @@
+# Author's Note (NOT AI GENERATED)
+
+
+> I wanted a way to transcribe my session recordings for various purposes.
+> Hope this is useful to others aswell. Any contribution at all is appreciated.
+
+
 # Episode Transcribe
 
-**Live overview:** https://transcribe-wine.vercel.app
-
-> `transcribe.vercel.app` is used by another Vercel project (not this repo). Use the **wine** URL above.
+**Live overview:** https://piyushm.dev/products/transcribe
 
 Batch-transcribe tabletop / actual-play episode MP4s into subtitles (`.srt`, `.txt`, optional speaker-tagged `.ass`) using [whisper.cpp](https://github.com/ggerganov/whisper.cpp) and [sherpa-onnx](https://github.com/k2-fsa/sherpa-onnx) speaker diarization.
 
