@@ -2,10 +2,10 @@ use crate::db::{open_db, require_project, sync_profiles};
 use crate::voice::{profiles, ProfileStore};
 use anyhow::{Context, Result};
 use dialoguer::{theme::ColorfulTheme, Input};
+use rodio::Sink;
 use std::io::{self, Write};
 use std::num::NonZero;
 use std::path::{Path, PathBuf};
-use rodio::Sink;
 
 pub fn run_interactive(
     project_name: Option<&str>,
