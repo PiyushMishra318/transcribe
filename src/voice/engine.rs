@@ -1,6 +1,7 @@
 use super::diarize::Diarizer;
 use super::profiles::ProfileStore;
 use super::sample;
+use crate::gpu::onnx_provider;
 use anyhow::{bail, Context, Result};
 use sherpa_onnx::{
     SpeakerEmbeddingExtractor, SpeakerEmbeddingExtractorConfig, SpeakerEmbeddingManager,
@@ -42,7 +43,7 @@ impl VoiceEngine {
             model: Some(emb_model.to_string_lossy().into_owned()),
             num_threads: 2,
             debug: false,
-            provider: Some("cpu".into()),
+            provider: Some(onnx_provider()),
         };
 
         let extractor =

@@ -7,7 +7,11 @@ use crate::db::{
 };
 use crate::help;
 use crate::label;
-use crate::output::{collect_segments, write_ass, write_srt, write_txt, Segment};
+use crate::output::{
+    apply_word_speakers, collect_segments, collect_words, write_ass, write_srt, write_txt,
+    write_words_json, Segment, TimedWord,
+};
+use crate::terms::load_initial_prompt;
 use crate::paths::discover_videos;
 use crate::project::resolve_models_dir;
 use crate::uninstall;
@@ -15,9 +19,11 @@ use crate::voice;
 use crate::voice::VoiceEngine;
 use anyhow::{bail, Context, Result};
 use clap::{Parser, Subcommand};
+use serde::Deserialize;
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
-use whisper_rs::{FullParams, SamplingStrategy, WhisperContext, WhisperContextParameters};
+use crate::gpu::{log_whisper_backend, whisper_context_params};
+use whisper_rs::{FullParams, SamplingStrategy, WhisperContext};
 
 #[derive(Parser)]
 #[command(
@@ -44,6 +50,10 @@ pub enum Commands {
     Profiles(ProfilesCli),
     /// Batch-transcribe episode MP4s (default when no subcommand).
     Run(RunArgs),
+    /// Re-transcribe a trimmed clip to Timed words (.words.json) for vod-guru.
+    Clip(ClipArgs),
+    /// Batch clip STT — one GPU model load for many clips (vod-guru prepare-reviews-batch).
+    ClipBatch(ClipBatchArgs),
     /// Detailed command reference (topics: project, profiles, run, models, install).
     Help {
         #[arg(value_name = "TOPIC")]
@@ -152,17 +162,64 @@ pub struct RunArgs {
     #[arg(short, long)]
     pub force: bool,
 
-    #[arg(short, long, default_value = "medium")]
+    #[arg(short, long, default_value = "large-v3")]
     pub model: String,
 
     #[arg(long, value_name = "DIR")]
     pub models_dir: Option<PathBuf>,
 
+    /// Co-op stream: tag speakers when voice profiles exist (off by default).
+    #[arg(long)]
+    pub coop: bool,
+
     #[arg(long)]
     pub no_speakers: bool,
 
+    /// Key terms file (default: `<video>.terms.txt` beside each source MP4).
+    #[arg(long, value_name = "FILE")]
+    pub terms: Option<PathBuf>,
+
     #[arg(long)]
     pub project: Option<String>,
+}
+
+#[derive(Parser, Clone)]
+pub struct ClipArgs {
+    /// Trimmed review clip (.mp4 or .wav).
+    pub path: PathBuf,
+
+    #[arg(short, long)]
+    pub force: bool,
+
+    #[arg(short, long, default_value = "small")]
+    pub model: String,
+
+    #[arg(long, value_name = "DIR")]
+    pub models_dir: Option<PathBuf>,
+
+    #[arg(long, value_name = "FILE")]
+    pub terms: Option<PathBuf>,
+
+    /// Inline key terms (comma-separated); used when --terms is omitted.
+    #[arg(long)]
+    pub prompt: Option<String>,
+
+    /// Output .words.json path (default: beside clip with .words.json extension).
+    #[arg(long, value_name = "FILE")]
+    pub output: Option<PathBuf>,
+}
+
+#[derive(Parser, Clone)]
+pub struct ClipBatchArgs {
+    /// JSON job list: [{"clip":"…","output":"…","prompt":"…","force":false}]
+    #[arg(long, value_name = "FILE")]
+    pub manifest: PathBuf,
+
+    #[arg(short, long, default_value = "small")]
+    pub model: String,
+
+    #[arg(long, value_name = "DIR")]
+    pub models_dir: Option<PathBuf>,
 }
 
 /// Parse argv and run the CLI (used by the binary and tests).
@@ -189,6 +246,8 @@ fn dispatch(cli: Cli) -> Result<()> {
         Some(Commands::Project(p)) => run_project(p),
         Some(Commands::Profiles(p)) | Some(Commands::Voice(p)) => run_profiles(p),
         Some(Commands::Run(r)) => run_transcribe(r),
+        Some(Commands::Clip(c)) => run_clip(c),
+        Some(Commands::ClipBatch(b)) => run_clip_batch(b),
         None => run_transcribe(cli.run),
     }
 }
@@ -326,34 +385,26 @@ pub fn run_transcribe(cli: RunArgs) -> Result<()> {
         sync_episodes(&db, p, &scan_path)?;
     }
 
-    let use_speakers =
-        !cli.no_speakers && voices_dir.join(voice::profiles::PROFILES_FILE).is_file();
+    let use_speakers = cli.coop
+        && !cli.no_speakers
+        && voices_dir.join(voice::profiles::PROFILES_FILE).is_file();
     let mut voice_engine = if use_speakers {
         eprintln!("speaker tagging: {}", voices_dir.display());
         Some(VoiceEngine::for_transcribe(&models_dir, &voices_dir)?)
     } else {
-        if !cli.no_speakers && project.is_none() {
-            eprintln!("warning: no active project / profiles; transcribing without speakers");
+        if cli.coop && !cli.no_speakers && project.is_some() {
+            eprintln!("warning: --coop set but no profiles.json; transcribing without speakers");
+        } else if cli.coop && !cli.no_speakers && project.is_none() {
+            eprintln!("warning: --coop requires an active project with profiles; transcribing without speakers");
         }
         None
     };
 
     eprintln!("loading model: {}", model_path.display());
-    let ctx_params = {
-        #[cfg(feature = "cuda")]
-        {
-            let mut p = WhisperContextParameters::default();
-            p.use_gpu(true);
-            p
-        }
-        #[cfg(not(feature = "cuda"))]
-        {
-            WhisperContextParameters::default()
-        }
-    };
+    log_whisper_backend();
     let ctx = WhisperContext::new_with_params(
         model_path.to_str().context("model path is not UTF-8")?,
-        ctx_params,
+        whisper_context_params(),
     )
     .context("load whisper model (CUDA build needs toolkit + driver)")?;
 
@@ -372,6 +423,7 @@ pub fn run_transcribe(cli: RunArgs) -> Result<()> {
             vad_path.as_deref(),
             voice_engine.as_mut(),
             use_speakers,
+            cli.terms.as_deref(),
         ) {
             Ok(()) => {
                 if let Some(pid) = project_id {
@@ -394,6 +446,130 @@ pub fn run_transcribe(cli: RunArgs) -> Result<()> {
     Ok(())
 }
 
+pub fn run_clip(cli: ClipArgs) -> Result<()> {
+    let models_dir = resolve_models_dir(None, cli.models_dir.clone())?;
+    eprintln!("models: {}", models_dir.display());
+    log_whisper_backend();
+
+    let ctx = load_whisper_context(&models_dir, &cli.model)?;
+    let vad_path = find_vad_model(&models_dir);
+    let output = cli
+        .output
+        .clone()
+        .unwrap_or_else(|| cli.path.with_extension("words.json"));
+    let initial_prompt = cli
+        .terms
+        .as_ref()
+        .and_then(|path| load_initial_prompt(path))
+        .or(cli.prompt.clone());
+
+    process_clip_with_ctx(
+        &ctx,
+        &cli.path,
+        &output,
+        initial_prompt.as_deref(),
+        vad_path.as_deref(),
+        cli.force,
+    )
+}
+
+#[derive(Debug, Deserialize)]
+struct ClipBatchJob {
+    clip: PathBuf,
+    output: PathBuf,
+    #[serde(default)]
+    prompt: Option<String>,
+    #[serde(default)]
+    force: bool,
+}
+
+pub fn run_clip_batch(cli: ClipBatchArgs) -> Result<()> {
+    let manifest_raw = std::fs::read_to_string(&cli.manifest)
+        .with_context(|| format!("read manifest {}", cli.manifest.display()))?;
+    let jobs: Vec<ClipBatchJob> =
+        serde_json::from_str(&manifest_raw).context("parse clip-batch manifest JSON")?;
+    if jobs.is_empty() {
+        bail!("clip-batch manifest is empty");
+    }
+
+    let models_dir = resolve_models_dir(None, cli.models_dir.clone())?;
+    eprintln!("models: {}", models_dir.display());
+    eprintln!("clip-batch: {} job(s)", jobs.len());
+    log_whisper_backend();
+
+    let ctx = load_whisper_context(&models_dir, &cli.model)?;
+    let vad_path = find_vad_model(&models_dir);
+
+    let mut had_errors = false;
+    for (index, job) in jobs.iter().enumerate() {
+        eprintln!("clip-batch [{}/{}]", index + 1, jobs.len());
+        if let Err(error) = process_clip_with_ctx(
+            &ctx,
+            &job.clip,
+            &job.output,
+            job.prompt.as_deref(),
+            vad_path.as_deref(),
+            job.force,
+        ) {
+            eprintln!("error: {}: {:#}", job.clip.display(), error);
+            had_errors = true;
+        }
+    }
+
+    if had_errors {
+        bail!("one or more clip-batch jobs failed");
+    }
+    Ok(())
+}
+
+fn load_whisper_context(models_dir: &Path, model: &str) -> Result<WhisperContext> {
+    let model_path = models_dir.join(format!("ggml-{model}.bin"));
+    if !model_path.is_file() {
+        bail!(
+            "model not found: {}\nDownload ggml-{model}.bin into {}",
+            model_path.display(),
+            models_dir.display()
+        );
+    }
+    eprintln!("loading model: {}", model_path.display());
+    WhisperContext::new_with_params(
+        model_path.to_str().context("model path is not UTF-8")?,
+        whisper_context_params(),
+    )
+    .context("load whisper model (CUDA build needs toolkit + driver)")
+}
+
+fn process_clip_with_ctx(
+    ctx: &WhisperContext,
+    clip: &Path,
+    output: &Path,
+    initial_prompt: Option<&str>,
+    vad_model: Option<&Path>,
+    force: bool,
+) -> Result<()> {
+    if !clip.is_file() {
+        bail!("clip not found: {}", clip.display());
+    }
+    if output.is_file() && !force {
+        eprintln!("skipped: {}", output.display());
+        return Ok(());
+    }
+
+    eprintln!("clip STT: {} -> {}", clip.display(), output.display());
+    if let Some(prompt) = initial_prompt {
+        if !prompt.is_empty() {
+            eprintln!("key terms: {prompt}");
+        }
+    }
+
+    let (samples, wav_path) = audio::extract_and_load(clip)?;
+    let result = transcribe(ctx, &samples, vad_model, initial_prompt)?;
+    audio::remove_temp_wav(&wav_path);
+    write_words_json(output, &result.words)?;
+    eprintln!("done: {}", output.display());
+    Ok(())
+}
+
 pub fn find_vad_model(models_dir: &Path) -> Option<PathBuf> {
     for name in ["ggml-silero-v6.2.0.bin", "ggml-silero-v5.1.2.bin"] {
         let path = models_dir.join(name);
@@ -408,11 +584,23 @@ pub fn outputs_exist(video: &Path, with_speakers: bool) -> bool {
     let stem = video.with_extension("");
     let txt = stem.with_extension("txt").is_file();
     let srt = stem.with_extension("srt").is_file();
+    let words = stem.with_extension("words.json").is_file();
     if with_speakers {
-        txt && srt && stem.with_extension("ass").is_file()
+        txt && srt && words && stem.with_extension("ass").is_file()
     } else {
-        txt && srt
+        txt && srt && words
     }
+}
+
+fn resolve_terms_path(video: &Path, cli_terms: Option<&Path>) -> PathBuf {
+    cli_terms
+        .map(Path::to_path_buf)
+        .unwrap_or_else(|| video.with_extension("terms.txt"))
+}
+
+pub struct TranscribeOutput {
+    pub segments: Vec<Segment>,
+    pub words: Vec<TimedWord>,
 }
 
 pub fn process_one(
@@ -422,6 +610,7 @@ pub fn process_one(
     vad_model: Option<&Path>,
     voice_engine: Option<&mut VoiceEngine>,
     with_speakers: bool,
+    terms_path: Option<&Path>,
 ) -> Result<()> {
     let label = video
         .file_stem()
@@ -435,26 +624,34 @@ pub fn process_one(
 
     eprintln!("transcribing: {label}...");
     let (samples, wav_path) = audio::extract_and_load(video)?;
-    let mut segments = transcribe(ctx, &samples, vad_model)?;
+    let terms = resolve_terms_path(video, terms_path);
+    let initial_prompt = load_initial_prompt(&terms);
+    if let Some(ref prompt) = initial_prompt {
+        eprintln!("key terms: {} (from {})", prompt, terms.display());
+    }
+    let mut output = transcribe(ctx, &samples, vad_model, initial_prompt.as_deref())?;
 
     if let Some(engine) = voice_engine.as_ref() {
-        for seg in &mut segments {
+        for seg in &mut output.segments {
             seg.speaker = engine.identify_range(&samples, seg.start_cs, seg.end_cs);
         }
     }
+    apply_word_speakers(&mut output.words, &output.segments);
 
     audio::remove_temp_wav(&wav_path);
 
     let stem = video.with_extension("");
     let txt_path = stem.with_extension("txt");
     let srt_path = stem.with_extension("srt");
-    write_txt(&txt_path, label, &segments)?;
-    write_srt(&srt_path, &segments)?;
+    let words_path = stem.with_extension("words.json");
+    write_txt(&txt_path, label, &output.segments)?;
+    write_srt(&srt_path, &output.segments)?;
+    write_words_json(&words_path, &output.words)?;
 
     if with_speakers {
         if let Some(engine) = voice_engine.as_ref() {
             let ass_path = stem.with_extension("ass");
-            write_ass(&ass_path, &segments, &engine.store)?;
+            write_ass(&ass_path, &output.segments, &engine.store)?;
         }
     }
 
@@ -466,7 +663,8 @@ pub fn transcribe(
     ctx: &WhisperContext,
     samples: &[f32],
     vad_model: Option<&Path>,
-) -> Result<Vec<Segment>> {
+    initial_prompt: Option<&str>,
+) -> Result<TranscribeOutput> {
     let mut state = ctx.create_state().context("create whisper state")?;
     let mut params = FullParams::new(SamplingStrategy::Greedy { best_of: 1 });
 
@@ -476,6 +674,12 @@ pub fn transcribe(
     params.set_print_progress(false);
     params.set_print_realtime(false);
     params.set_print_timestamps(false);
+    params.set_token_timestamps(true);
+    if let Some(prompt) = initial_prompt {
+        if !prompt.is_empty() {
+            params.set_initial_prompt(prompt);
+        }
+    }
 
     if let Some(vad) = vad_model {
         params.set_vad_model_path(Some(vad.to_str().context("VAD model path is not UTF-8")?));
@@ -486,7 +690,9 @@ pub fn transcribe(
         .full(params, samples)
         .context("whisper inference failed")?;
 
-    collect_segments(&state)
+    let segments = collect_segments(&state)?;
+    let words = collect_words(&state)?;
+    Ok(TranscribeOutput { segments, words })
 }
 
 #[cfg(test)]
@@ -504,6 +710,8 @@ mod tests {
         std::fs::write(stem.with_extension("txt"), "t").unwrap();
         assert!(!outputs_exist(&video, false));
         std::fs::write(stem.with_extension("srt"), "s").unwrap();
+        assert!(!outputs_exist(&video, false));
+        std::fs::write(stem.with_extension("words.json"), "[]").unwrap();
         assert!(outputs_exist(&video, false));
         assert!(!outputs_exist(&video, true));
         std::fs::write(stem.with_extension("ass"), "a").unwrap();

@@ -1,4 +1,5 @@
 use anyhow::{bail, Context, Result};
+use crate::gpu::ffmpeg_hwaccel_args;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 
@@ -11,9 +12,13 @@ pub fn extract_and_load(video: &Path) -> Result<(Vec<f32>, PathBuf)> {
 }
 
 fn run_ffmpeg(input: &Path, output: &Path) -> Result<()> {
-    let status = Command::new("ffmpeg")
+    let mut command = Command::new("ffmpeg");
+    command.arg("-y");
+    for arg in ffmpeg_hwaccel_args() {
+        command.arg(arg);
+    }
+    let status = command
         .args([
-            "-y",
             "-i",
             input.to_str().context("non-UTF-8 video path")?,
             "-vn",

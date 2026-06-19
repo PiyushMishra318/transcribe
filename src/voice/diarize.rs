@@ -1,4 +1,5 @@
 use anyhow::{bail, Context, Result};
+use crate::gpu::onnx_provider;
 use sherpa_onnx::{
     FastClusteringConfig, OfflineSpeakerDiarization, OfflineSpeakerDiarizationConfig,
     OfflineSpeakerSegmentationModelConfig, OfflineSpeakerSegmentationPyannoteModelConfig,
@@ -36,18 +37,20 @@ impl Diarizer {
             );
         }
 
+        let provider = onnx_provider();
         let config = OfflineSpeakerDiarizationConfig {
             segmentation: OfflineSpeakerSegmentationModelConfig {
                 pyannote: OfflineSpeakerSegmentationPyannoteModelConfig {
                     model: Some(seg_model.to_string_lossy().into_owned()),
                 },
+                provider: Some(provider.clone()),
                 ..Default::default()
             },
             embedding: SpeakerEmbeddingExtractorConfig {
                 model: Some(emb_model.to_string_lossy().into_owned()),
                 num_threads: 2,
                 debug: false,
-                provider: Some("cpu".into()),
+                provider: Some(provider),
             },
             clustering: FastClusteringConfig {
                 num_clusters: expected_speakers,

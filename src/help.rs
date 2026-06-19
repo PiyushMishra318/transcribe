@@ -74,20 +74,50 @@ EXAMPLE
 const RUN: &str = r#"RUN — transcribe episodes to .txt / .srt / .ass
 
   transcribe run [PATH] [options]
+  transcribe clip <CLIP> [options]     vod-guru clip re-transcribe (GPU Whisper)
   transcribe [PATH] [options]          (shorthand)
 
       PATH    File or folder of .mp4 files (default: .)
 
   -f, --force              Re-transcribe even if outputs exist
-  -m, --model <NAME>       Whisper model: base, medium, ... (default: medium)
+  -m, --model <NAME>       Whisper model: large-v3, medium, base, ... (default: large-v3)
       --models-dir <DIR>   GGML + sherpa models folder
-      --no-speakers        Skip speaker tagging
-      --project <NAME>     Use registered project's voices/ for tagging
+      --coop               Co-op stream: tag speakers when voice profiles exist
+      --no-speakers        Skip speaker tagging (overrides --coop)
+      --terms <FILE>       Key terms file (default: <video>.terms.txt beside source)
+      --project <NAME>     Use registered project's voices/ for --coop tagging
 
 OUTPUT (next to each video)
-  Episode.txt   Plain transcript
-  Episode.srt   Subtitles
-  Episode.ass   Styled subtitles (when speakers enabled)
+  Episode.txt         Plain transcript
+  Episode.srt         Subtitles
+  Episode.words.json  Timed words (vod-guru ideation sidecar)
+  Episode.ass         Styled subtitles (when --coop speakers enabled)
+  Episode.terms.txt   Optional key terms (read automatically when present)
+
+CLIP (vod-guru prepare-review)
+  transcribe clip <review.mp4> [options]
+
+      --model <NAME>       Whisper model (default: small)
+      --output <FILE>      Timed words path (default: <clip>.words.json)
+      --terms <FILE>       Key terms file
+      --prompt <TEXT>      Inline key terms (comma-separated)
+      --models-dir <DIR>   GGML models folder
+  -f, --force              Re-transcribe even if output exists
+
+CLIP-BATCH (vod-guru prepare-reviews-batch)
+  transcribe clip-batch --manifest <jobs.json> [options]
+
+      Manifest JSON array:
+        [{ "clip": "review/foo.mp4", "output": "review/foo.words.json",
+           "prompt": "term1, term2", "force": false }, ...]
+
+      --model <NAME>       Whisper model (default: small)
+      --models-dir <DIR>   GGML models folder
+
+  One CUDA Whisper load for all jobs. Skips outputs that already exist unless force.
+
+  Uses CUDA when transcribe is built with the cuda feature (default).
+  Set TRANSCRIBE_CPU=1 to force CPU Whisper; TRANSCRIBE_ONNX_PROVIDER for sherpa.
 
 EXAMPLE
   cd /path/to/campaign
@@ -104,6 +134,7 @@ const MODELS: &str = r#"MODELS — download once, shared across campaigns
     4. ~/.transcribe/models/
 
   Required (Whisper)
+    ggml-large-v3.bin Recommended for vod-guru intake (default --model large-v3)
     ggml-medium.bin   https://huggingface.co/ggerganov/whisper.cpp/tree/main
     ggml-base.bin     (faster, lower quality; use --model base)
 

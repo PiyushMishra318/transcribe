@@ -37,6 +37,7 @@ fn run_skips_when_outputs_exist() {
     fs::write(&mp4, b"x").unwrap();
     fs::write(tmp.path().join("short.txt"), "existing").unwrap();
     fs::write(tmp.path().join("short.srt"), "existing").unwrap();
+    fs::write(tmp.path().join("short.words.json"), "{}").unwrap();
 
     let models = tmp.path().join("models");
     fs::create_dir_all(&models).unwrap();

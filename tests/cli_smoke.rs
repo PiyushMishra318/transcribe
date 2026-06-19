@@ -201,6 +201,7 @@ fn e2e_transcribe_test_clip() {
         .args([
             "run",
             ".",
+            "--coop",
             "--model",
             "base",
             "--models-dir",
@@ -211,8 +212,10 @@ fn e2e_transcribe_test_clip() {
 
     let txt_path = tmp.path().join("sample.txt");
     let srt_path = tmp.path().join("sample.srt");
+    let words_path = tmp.path().join("sample.words.json");
     assert!(txt_path.is_file());
     assert!(srt_path.is_file());
+    assert!(words_path.is_file());
 
     let txt = fs::read_to_string(&txt_path).unwrap();
     assert!(!txt.trim().is_empty(), "transcript .txt is empty");

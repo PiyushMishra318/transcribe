@@ -3,118 +3,678 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Episode Transcribe — subtitles for actual-play sessions</title>
-  <meta name="description" content="Turn tabletop session recordings into searchable subtitles. Batch-transcribe MP4 folders into captions beside each file — ready for YouTube, notes, and your campaign archive." />
-  <meta name="theme-color" content="#0a0907" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,700&family=Karla:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400;500&display=swap" />
+  <meta name="description" content="Episode Transcribe — Batch-transcribe MP4 episode recordings into SRT, TXT, and speaker-tagged ASS subtitles using whisper.cpp and sherpa-onnx. CLI-first, directory-oriented, GPU-accelerated." />
+  <meta name="theme-color" content="#08071a" />
+  <title>Episode Transcribe — Whisper.cpp CLI for Podcast &amp; Tabletop Transcription</title>
   <link rel="stylesheet" href="styles.css" />
 </head>
-<body class="theme-transcribe landing-v2">
-  <div class="bg-animation" aria-hidden="true"></div>
-  <div class="grain" aria-hidden="true"></div>
+<body>
+<div class="page">
 
-  <header class="header landing-hero landing-hero--split">
-    <div class="header__top">
-      <a class="header__brand" href="https://piyushm.dev">piyushm.dev</a>
-      <button type="button" id="theme-toggle" class="theme-toggle" aria-label="Toggle color theme" title="Toggle theme">
-        <span class="theme-toggle__icon theme-toggle__icon--sun" aria-hidden="true">&#9728;</span>
-        <span class="theme-toggle__icon theme-toggle__icon--moon" aria-hidden="true">&#9789;</span>
-      </button>
-    </div>
-
-    <div class="header__inner hero-copy">
-      <p class="eyebrow">Actual-play · Campaign archives</p>
-      <span class="badge">Desktop app · Windows first</span>
-      <h1><span class="h1-accent">Episode Transcribe</span></h1>
-      <p class="lead">Drop a folder of session recordings and wake up to subtitles beside every episode — timed captions for uploads, plain text for notes, and optional speaker labels when your table uses multiple mics.</p>
-      <div class="hero-cta links">
-        <a class="btn btn-primary" href="https://github.com/PiyushMishra318/transcribe/releases/latest" id="release-link">Download for Windows</a>
-        <a class="btn btn-secondary" href="https://github.com/PiyushMishra318/transcribe" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+  <!-- ===== Navigation ===== -->
+  <nav class="nav" role="navigation" aria-label="Site navigation">
+    <div class="container">
+      <div class="nav__inner">
+        <a href="/" class="nav__back" aria-label="Back to piyushm.dev">
+          <svg class="nav__back-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M19 12H5M12 5l-7 7 7 7"/>
+          </svg>
+          <span class="nav__back-text">PIYUSHM.DEV</span>
+        </a>
+        <span class="badge nav__badge">v0.1 · Open Source</span>
       </div>
     </div>
+  </nav>
 
-    <aside class="hero-panel hero-panel--shelf" aria-labelledby="hero-panel-title">
-      <p id="hero-panel-title" class="hero-panel__label">Beside each episode</p>
-      <ul class="hero-panel__library" aria-hidden="true">
-        <li class="hero-panel__row">
-          <span class="hero-panel__thumb" aria-hidden="true"></span>
-          <span class="hero-panel__meta">
-            <strong>session_04.mp4</strong>
-            <span>4h 12m · Season two</span>
-          </span>
-          <span class="hero-panel__chip">SRT</span>
-        </li>
-        <li class="hero-panel__row">
-          <span class="hero-panel__thumb hero-panel__thumb--alt" aria-hidden="true"></span>
-          <span class="hero-panel__meta">
-            <strong>session_05.mp4</strong>
-            <span>3h 48m · Ready to upload</span>
-          </span>
-          <span class="hero-panel__chip hero-panel__chip--muted">TXT</span>
-        </li>
-        <li class="hero-panel__row">
-          <span class="hero-panel__thumb hero-panel__thumb--warm" aria-hidden="true"></span>
-          <span class="hero-panel__meta">
-            <strong>session_06.mp4</strong>
-            <span>Multi-mic · Speaker tags</span>
-          </span>
-          <span class="hero-panel__chip">ASS</span>
-        </li>
-      </ul>
-      <div class="hero-panel__glow" aria-hidden="true"></div>
-    </aside>
-  </header>
+  <!-- ===== Hero ===== -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="container">
 
-  <main class="page-main">
-    <p class="section-title">Built for your table</p>
-    <div class="feature-grid">
-      <article class="feature-tile feature-tile--1">
-        <span class="feature-tile__glyph" aria-hidden="true">01</span>
-        <strong>Batch a whole season</strong>
-        <span>Point at your campaign folder and let subtitles appear beside every episode — no per-session project files or manual exports.</span>
-      </article>
-      <article class="feature-tile feature-tile--2">
-        <span class="feature-tile__glyph" aria-hidden="true">02</span>
-        <strong>Publish-ready captions</strong>
-        <span>Timed SRT files drop straight into YouTube or your editor so viewers get closed captions without retyping four-hour sessions.</span>
-      </article>
-      <article class="feature-tile feature-tile--3">
-        <span class="feature-tile__glyph" aria-hidden="true">03</span>
-        <strong>Searchable archives</strong>
-        <span>Plain-text transcripts live next to each recording — find a ruling, a lore drop, or a player quip without scrubbing through video.</span>
-      </article>
-      <article class="feature-tile feature-tile--4">
-        <span class="feature-tile__glyph" aria-hidden="true">04</span>
-        <strong>Speaker labels when it matters</strong>
-        <span>When your table records on separate mics, optional tagged captions show who said what across the party.</span>
-      </article>
-    </div>
-
-    <div class="cta-band">
-      <div>
-        <strong>Ready to caption your campaign?</strong>
-        <p>Install on your machine, drop in a folder of session recordings, and your subtitles stay on your disk — private audio never leaves your PC.</p>
+      <div class="hero__eyebrow">
+        <span class="badge">whisper.cpp</span>
+        <span class="badge">sherpa-onnx</span>
+        <span class="badge">Rust CLI</span>
       </div>
-      <a class="btn btn-primary" href="https://github.com/PiyushMishra318/transcribe/releases/latest" id="release-link-cta">Get the app</a>
-    </div>
-  </main>
 
-  <footer class="site-footer footer">
-    <p>MIT © 2026 · <a href="https://piyushm.dev">piyushm.dev</a> · <a href="https://github.com/PiyushMishra318/transcribe">GitHub</a> · <a href="https://github.com/PiyushMishra318/transcribe#install">Install guide</a></p>
+      <h1 class="hero__title" id="hero-title">
+        Transcribe
+        <span class="hero__title-accent">Every Episode.</span>
+      </h1>
+
+      <p class="hero__tagline">
+        Batch-transcribe tabletop and actual-play MP4s into SRT, TXT, and
+        speaker-tagged ASS subtitles — powered by whisper.cpp and sherpa-onnx
+        diarization. One CLI, any directory.
+      </p>
+
+      <div class="hero__cta-group">
+        <a
+          href="https://github.com/piyush97/episode-transcribe"
+          class="btn btn--primary"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+            <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+          </svg>
+          View on GitHub
+        </a>
+        <a href="#install" class="btn btn--ghost">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1M16 12l-4 4m0 0l-4-4m4 4V4"/>
+          </svg>
+          Install Guide
+        </a>
+      </div>
+
+      <!-- Animated waveform graphic -->
+      <div class="hero__waveform" aria-hidden="true">
+        <div class="hero__waveform-bar"></div>
+        <div class="hero__waveform-bar"></div>
+        <div class="hero__waveform-bar"></div>
+        <div class="hero__waveform-bar"></div>
+        <div class="hero__waveform-bar"></div>
+        <div class="hero__waveform-bar"></div>
+        <div class="hero__waveform-bar"></div>
+        <div class="hero__waveform-bar"></div>
+        <div class="hero__waveform-bar"></div>
+        <div class="hero__waveform-bar"></div>
+        <div class="hero__waveform-bar"></div>
+        <div class="hero__waveform-bar"></div>
+        <div class="hero__waveform-bar"></div>
+        <div class="hero__waveform-bar"></div>
+        <div class="hero__waveform-bar"></div>
+        <div class="hero__waveform-bar"></div>
+        <div class="hero__waveform-bar"></div>
+        <div class="hero__waveform-bar"></div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== Features ===== -->
+  <section class="features section" aria-labelledby="features-title">
+    <div class="container">
+
+      <div class="features__heading">
+        <h2 id="features-title">Everything you need to transcribe at scale</h2>
+        <p>From a single episode to an entire campaign archive — one command handles it all.</p>
+      </div>
+
+      <div class="features__grid">
+
+        <div class="feature-card">
+          <div class="feature-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 2a3 3 0 003 3v3H9V5a3 3 0 013-3z"/>
+              <rect x="9" y="8" width="6" height="8" rx="2"/>
+              <path d="M5 12a7 7 0 0014 0M12 19v3M8 22h8"/>
+            </svg>
+          </div>
+          <h3 class="feature-card__title">Batch Transcription</h3>
+          <p class="feature-card__desc">
+            Point the CLI at any directory of MP4 files. Every video is processed in sequence,
+            with outputs written next to each source file — no configuration required.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M8 12h8M12 8v8"/>
+            </svg>
+          </div>
+          <h3 class="feature-card__title">Speaker Diarization</h3>
+          <p class="feature-card__desc">
+            Integrates sherpa-onnx to identify who is speaking at each moment.
+            Outputs speaker-tagged ASS subtitle files for multi-participant sessions.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+          </div>
+          <h3 class="feature-card__title">GPU Accelerated</h3>
+          <p class="feature-card__desc">
+            CUDA support out-of-the-box on Windows via MSVC. Falls back gracefully
+            to CPU-only mode with a single flag — works on any machine.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/>
+              <path d="M9 3v18M3 9h6M3 15h6"/>
+            </svg>
+          </div>
+          <h3 class="feature-card__title">Multiple Output Formats</h3>
+          <p class="feature-card__desc">
+            Generates <code>.srt</code> for standard subtitles, <code>.txt</code> for plain transcripts,
+            and <code>.ass</code> for speaker-tagged advanced subtitles. All three, simultaneously.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="4 17 10 11 4 5"/>
+              <line x1="12" y1="19" x2="20" y2="19"/>
+            </svg>
+          </div>
+          <h3 class="feature-card__title">CLI-First Design</h3>
+          <p class="feature-card__desc">
+            Install once, use from anywhere. <code>cd</code> into your episodes folder and run.
+            Built-in help system with per-topic docs — <code>transcribe help profiles</code>.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="3"/>
+              <path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/>
+            </svg>
+          </div>
+          <h3 class="feature-card__title">Model Flexibility</h3>
+          <p class="feature-card__desc">
+            Choose from whisper <code>base</code> (~150 MB) for speed or <code>medium</code> (~1.5 GB)
+            for accuracy. Swap models per-run or set a default in your profile.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+            </svg>
+          </div>
+          <h3 class="feature-card__title">Cross-Platform</h3>
+          <p class="feature-card__desc">
+            Full support for Windows 10/11 (CUDA + MSVC), Ubuntu 22.04+, and macOS 12+.
+            Install scripts handle all dependencies for each platform.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-card__icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/>
+              <polyline points="14 2 14 8 20 8"/>
+              <line x1="16" y1="13" x2="8" y2="13"/>
+              <line x1="16" y1="17" x2="8" y2="17"/>
+              <polyline points="10 9 9 9 8 9"/>
+            </svg>
+          </div>
+          <h3 class="feature-card__title">ffmpeg Integration</h3>
+          <p class="feature-card__desc">
+            Leverages ffmpeg for audio extraction from MP4. Any ffmpeg-compatible
+            container works — MP4, MKV, MOV, WebM, and more.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== How It Works ===== -->
+  <section class="how section" aria-labelledby="how-title">
+    <div class="container">
+
+      <div class="how__heading">
+        <h2 id="how-title">From raw MP4 to subtitles in four steps</h2>
+        <p>The workflow is intentionally straightforward. No config files, no web interface — just a terminal and your episode folder.</p>
+      </div>
+
+      <ol class="how__steps">
+
+        <li class="step">
+          <div class="step__number" aria-hidden="true">01</div>
+          <div class="step__content">
+            <h3 class="step__title">Install the CLI</h3>
+            <p class="step__desc">
+              Clone the repo and run the install script for your platform. The binary is
+              placed in a system location and added to your PATH automatically.
+              Open a new terminal to confirm installation.
+            </p>
+            <code class="step__code">transcribe --version</code>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step__number" aria-hidden="true">02</div>
+          <div class="step__content">
+            <h3 class="step__title">Navigate to your episode folder</h3>
+            <p class="step__desc">
+              The CLI is directory-oriented. The working directory is your source.
+              Every MP4 found there becomes a transcription target — no globbing needed.
+            </p>
+            <code class="step__code">cd ~/recordings/campaign-s2</code>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step__number" aria-hidden="true">03</div>
+          <div class="step__content">
+            <h3 class="step__title">Choose your model and run</h3>
+            <p class="step__desc">
+              Select a Whisper model size and trigger the batch. whisper.cpp extracts audio
+              via ffmpeg, runs inference, and produces timestamped output for every file.
+            </p>
+            <code class="step__code">transcribe run --model medium</code>
+          </div>
+        </li>
+
+        <li class="step">
+          <div class="step__number" aria-hidden="true">04</div>
+          <div class="step__content">
+            <h3 class="step__title">Collect your outputs</h3>
+            <p class="step__desc">
+              Outputs are written next to each source MP4. You get an SRT subtitle file,
+              a plain TXT transcript, and — if diarization is enabled — an ASS file with
+              speaker labels for each voice.
+            </p>
+            <code class="step__code">episode-01.mp4 → episode-01.srt, .txt, .ass</code>
+          </div>
+        </li>
+
+      </ol>
+    </div>
+  </section>
+
+  <!-- ===== Tech Stack ===== -->
+  <section class="tech section" aria-labelledby="tech-title">
+    <div class="container">
+
+      <div class="tech__heading">
+        <h2 id="tech-title">Built on proven inference engines</h2>
+        <p>No cloud API, no subscription — all inference runs locally on your hardware.</p>
+      </div>
+
+      <div class="tech__grid">
+
+        <div class="tech-item">
+          <span class="tech-item__label">Transcription</span>
+          <span class="tech-item__value">whisper.cpp</span>
+        </div>
+
+        <div class="tech-item">
+          <span class="tech-item__label">Diarization</span>
+          <span class="tech-item__value">sherpa-onnx</span>
+        </div>
+
+        <div class="tech-item">
+          <span class="tech-item__label">Language</span>
+          <span class="tech-item__value">Rust 1.75+</span>
+        </div>
+
+        <div class="tech-item">
+          <span class="tech-item__label">Audio Extract</span>
+          <span class="tech-item__value">ffmpeg 6+</span>
+        </div>
+
+        <div class="tech-item">
+          <span class="tech-item__label">GPU Compute</span>
+          <span class="tech-item__value">CUDA 12+</span>
+        </div>
+
+        <div class="tech-item">
+          <span class="tech-item__label">Build Toolchain</span>
+          <span class="tech-item__value">MSVC / GCC</span>
+        </div>
+
+        <div class="tech-item">
+          <span class="tech-item__label">Model Format</span>
+          <span class="tech-item__value">GGML / ONNX</span>
+        </div>
+
+        <div class="tech-item">
+          <span class="tech-item__label">Output Formats</span>
+          <span class="tech-item__value">SRT · TXT · ASS</span>
+        </div>
+
+      </div>
+
+      <div class="tag-list" style="margin-top: 2.5rem; justify-content: center;">
+        <span class="tag">whisper-medium</span>
+        <span class="tag">whisper-base</span>
+        <span class="tag">speaker-diarization</span>
+        <span class="tag">batch-processing</span>
+        <span class="tag">offline</span>
+        <span class="tag">local-inference</span>
+        <span class="tag">subtitle-generation</span>
+        <span class="tag">podcast</span>
+        <span class="tag">tabletop-rpg</span>
+        <span class="tag">actual-play</span>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== System Requirements ===== -->
+  <section class="reqs section" aria-labelledby="reqs-title">
+    <div class="container">
+
+      <div class="reqs__heading">
+        <h2 id="reqs-title">System requirements</h2>
+        <p>CPU-only builds work on modest hardware. A CUDA GPU dramatically cuts per-episode time.</p>
+      </div>
+
+      <div class="reqs__table-wrap" role="region" aria-labelledby="reqs-title" tabindex="0">
+        <table class="reqs__table">
+          <thead>
+            <tr>
+              <th scope="col">Component</th>
+              <th scope="col">Minimum</th>
+              <th scope="col">Recommended</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>OS</td>
+              <td>Windows 10/11, Ubuntu 22.04+, macOS 12+</td>
+              <td>Same platforms, latest patch</td>
+            </tr>
+            <tr>
+              <td>CPU</td>
+              <td>4 cores, x64 architecture</td>
+              <td>8+ cores, modern IPC</td>
+            </tr>
+            <tr>
+              <td>RAM</td>
+              <td>8 GB</td>
+              <td>16 GB+</td>
+            </tr>
+            <tr>
+              <td>Disk</td>
+              <td>3 GB free (models + build)</td>
+              <td>SSD with 5 GB+</td>
+            </tr>
+            <tr>
+              <td>GPU (optional)</td>
+              <td>NVIDIA 4 GB VRAM, CUDA 12+</td>
+              <td>RTX 3060+ with 8 GB VRAM</td>
+            </tr>
+            <tr>
+              <td>Rust</td>
+              <td>1.75+ (stable)</td>
+              <td>Latest stable toolchain</td>
+            </tr>
+            <tr>
+              <td>ffmpeg</td>
+              <td>Any version on PATH</td>
+              <td>ffmpeg 6+ for best compat</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- ===== Install ===== -->
+  <section class="install section" id="install" aria-labelledby="install-title">
+    <div class="container">
+
+      <div class="install__heading">
+        <h2 id="install-title">Get started in minutes</h2>
+        <p>Choose your platform and follow the steps. The installer handles Rust, CUDA detection, and PATH registration.</p>
+      </div>
+
+      <div class="install__tabs" role="tablist" aria-label="Platform install tabs">
+        <button
+          class="install__tab install__tab--active"
+          role="tab"
+          aria-selected="true"
+          aria-controls="panel-windows"
+          id="tab-windows"
+          onclick="switchTab('windows')"
+        >
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+            <path d="M3 12V6.75l6-1.32v6.57H3zm6.75-7.26L20.25 3v9H9.75V4.74zM3 13h6v5.43L3 17.25V13zm6.75.57h10.5V21l-10.5-1.74v-5.69z"/>
+          </svg>
+          Windows (GPU)
+        </button>
+        <button
+          class="install__tab"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-linux"
+          id="tab-linux"
+          onclick="switchTab('linux')"
+        >
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor" aria-hidden="true">
+            <path d="M12.504 0c-.155 0-.315.008-.48.021-4.226.333-3.105 4.807-3.17 6.298-.076 1.092-.3 1.953-1.05 3.02-.885 1.051-2.127 2.75-2.716 4.521-.278.832-.41 1.684-.287 2.489a.424.424 0 00-.11.135c-.26.268-.44.6-.45.9-.003.255.015.479.15.632.047.054.095.102.142.144a2.49 2.49 0 00-.05.544c.028 1.683 1.22 1.988 1.732 1.988h.09c.279 0 .667-.044 1.005-.196a2.487 2.487 0 001.37 2.208c.586.266 1.18.317 1.672.317.423 0 .8-.044 1.054-.108.384-.083.739-.346.932-.648a.414.414 0 00.187.044h.012c.267-.002.513-.063.735-.169.22.106.467.167.735.169h.012a.414.414 0 00.187-.044c.193.302.548.565.932.648.254.064.631.108 1.054.108.492 0 1.086-.051 1.672-.317a2.487 2.487 0 001.37-2.208c.338.152.726.196 1.005.196h.09c.512 0 1.704-.305 1.732-1.988a2.49 2.49 0 00-.05-.544c.047-.042.095-.09.142-.144.135-.153.153-.377.15-.632-.01-.3-.19-.632-.45-.9a.424.424 0 00-.11-.135c.123-.805-.009-1.657-.287-2.489-.589-1.771-1.831-3.47-2.716-4.521-.75-1.067-.974-1.928-1.05-3.02-.065-1.491 1.056-5.965-3.17-6.298a8.324 8.324 0 00-.48-.021z"/>
+          </svg>
+          Linux / macOS
+        </button>
+        <button
+          class="install__tab"
+          role="tab"
+          aria-selected="false"
+          aria-controls="panel-cpu"
+          id="tab-cpu"
+          onclick="switchTab('cpu')"
+        >
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <rect x="4" y="4" width="16" height="16" rx="2"/>
+            <rect x="9" y="9" width="6" height="6"/>
+            <line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/>
+            <line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/>
+            <line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/>
+            <line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/>
+          </svg>
+          CPU Only
+        </button>
+      </div>
+
+      <div class="install__panels">
+
+        <!-- Windows panel -->
+        <div class="install__panel install__panel--active" id="panel-windows" role="tabpanel" aria-labelledby="tab-windows">
+          <div class="code-block">
+            <div class="code-block__header">
+              <span class="code-block__lang">PowerShell</span>
+              <button class="code-block__copy" onclick="copyCode(this)" aria-label="Copy code">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                </svg>
+                Copy
+              </button>
+            </div>
+            <div class="code-block__body">
+              <pre><code>git clone https://github.com/piyush97/episode-transcribe.git
+cd episode-transcribe
+powershell -ExecutionPolicy Bypass -File scripts/install.ps1</code></pre>
+            </div>
+          </div>
+          <div class="code-block">
+            <div class="code-block__header">
+              <span class="code-block__lang">Verify</span>
+              <button class="code-block__copy" onclick="copyCode(this)" aria-label="Copy code">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                </svg>
+                Copy
+              </button>
+            </div>
+            <div class="code-block__body">
+              <pre><code>transcribe --version
+transcribe help</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- Linux / macOS panel -->
+        <div class="install__panel" id="panel-linux" role="tabpanel" aria-labelledby="tab-linux">
+          <div class="code-block">
+            <div class="code-block__header">
+              <span class="code-block__lang">Bash</span>
+              <button class="code-block__copy" onclick="copyCode(this)" aria-label="Copy code">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                </svg>
+                Copy
+              </button>
+            </div>
+            <div class="code-block__body">
+              <pre><code>git clone https://github.com/piyush97/episode-transcribe.git
+cd episode-transcribe
+chmod +x scripts/install.sh scripts/uninstall.sh
+./scripts/install.sh</code></pre>
+            </div>
+          </div>
+          <div class="code-block">
+            <div class="code-block__header">
+              <span class="code-block__lang">Verify</span>
+              <button class="code-block__copy" onclick="copyCode(this)" aria-label="Copy code">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                </svg>
+                Copy
+              </button>
+            </div>
+            <div class="code-block__body">
+              <pre><code>transcribe --version
+transcribe help profiles</code></pre>
+            </div>
+          </div>
+        </div>
+
+        <!-- CPU-only panel -->
+        <div class="install__panel" id="panel-cpu" role="tabpanel" aria-labelledby="tab-cpu">
+          <div class="code-block">
+            <div class="code-block__header">
+              <span class="code-block__lang">PowerShell — CPU Only</span>
+              <button class="code-block__copy" onclick="copyCode(this)" aria-label="Copy code">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                </svg>
+                Copy
+              </button>
+            </div>
+            <div class="code-block__body">
+              <pre><code>powershell -ExecutionPolicy Bypass -File scripts/install.ps1 -CpuOnly</code></pre>
+            </div>
+          </div>
+          <div class="code-block">
+            <div class="code-block__header">
+              <span class="code-block__lang">Bash — CPU Only</span>
+              <button class="code-block__copy" onclick="copyCode(this)" aria-label="Copy code">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                  <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/>
+                </svg>
+                Copy
+              </button>
+            </div>
+            <div class="code-block__body">
+              <pre><code>./scripts/install.sh --cpu-only</code></pre>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Footer ===== -->
+  <footer class="footer" role="contentinfo">
+    <div class="container">
+      <div class="footer__inner">
+
+        <div class="footer__links">
+          <a
+            href="https://github.com/piyush97/episode-transcribe"
+            class="footer__link"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="View source on GitHub"
+          >
+            <svg class="footer__link-icon" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <path d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/>
+            </svg>
+            GitHub
+          </a>
+          <a href="/" class="footer__link" aria-label="Back to portfolio">
+            <svg class="footer__link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            piyushm.dev
+          </a>
+          <a href="https://github.com/ggerganov/whisper.cpp" class="footer__link" target="_blank" rel="noopener noreferrer" aria-label="whisper.cpp upstream">
+            <svg class="footer__link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+            </svg>
+            whisper.cpp
+          </a>
+          <a href="https://github.com/k2-fsa/sherpa-onnx" class="footer__link" target="_blank" rel="noopener noreferrer" aria-label="sherpa-onnx upstream">
+            <svg class="footer__link-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/>
+              <path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/>
+            </svg>
+            sherpa-onnx
+          </a>
+        </div>
+
+        <p class="footer__copy">
+          &copy; 2024 Piyush Mishra &mdash; Episode Transcribe &mdash; MIT License
+        </p>
+
+      </div>
+    </div>
   </footer>
 
-  <script>
-    fetch("https://api.github.com/repos/PiyushMishra318/transcribe/releases/latest")
-      .then(function (r) { return r.ok ? r.json() : null; })
-      .then(function (rel) {
-        if (!rel || !rel.html_url) return;
-        var links = document.querySelectorAll("#release-link, #release-link-cta");
-        for (var i = 0; i < links.length; i++) links[i].href = rel.html_url;
-      })
-      .catch(function () {});
-  </script>
-  <script src="theme.js"></script>
+</div>
+
+<script>
+  /* ===== Tab switching ===== */
+  function switchTab(platform) {
+    const tabs   = document.querySelectorAll('.install__tab');
+    const panels = document.querySelectorAll('.install__panel');
+
+    tabs.forEach(function(tab) {
+      const active = tab.id === 'tab-' + platform;
+      tab.classList.toggle('install__tab--active', active);
+      tab.setAttribute('aria-selected', active ? 'true' : 'false');
+    });
+
+    panels.forEach(function(panel) {
+      const active = panel.id === 'panel-' + platform;
+      panel.classList.toggle('install__panel--active', active);
+    });
+  }
+
+  /* ===== Copy to clipboard ===== */
+  function copyCode(button) {
+    var codeBlock = button.closest('.code-block');
+    var pre = codeBlock.querySelector('pre');
+    if (!pre) return;
+
+    navigator.clipboard.writeText(pre.innerText).then(function() {
+      var originalHTML = button.innerHTML;
+      button.innerHTML = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>Copied!';
+      button.style.color = 'var(--color-success)';
+      button.style.borderColor = 'var(--color-success)';
+      setTimeout(function() {
+        button.innerHTML = originalHTML;
+        button.style.color = '';
+        button.style.borderColor = '';
+      }, 2000);
+    }).catch(function() {
+      /* fallback: select text */
+      var range = document.createRange();
+      range.selectNode(pre);
+      window.getSelection().removeAllRanges();
+      window.getSelection().addRange(range);
+    });
+  }
+</script>
+
 </body>
 </html>

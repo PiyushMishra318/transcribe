@@ -1,4 +1,5 @@
 use anyhow::{Context, Result};
+use serde::Serialize;
 use std::collections::BTreeSet;
 use std::fs::File;
 use std::io::Write;
@@ -6,6 +7,16 @@ use std::path::Path;
 use whisper_rs::WhisperState;
 
 use crate::voice::profiles::{ass_style_name, hex_to_ass_primary, ProfileStore};
+
+/// Per-word timing for vod-guru Timed words sidecar (`{basename}.words.json`).
+#[derive(Debug, Clone)]
+pub struct TimedWord {
+    pub start: f64,
+    pub end: f64,
+    pub text: String,
+    pub segment_index: usize,
+    pub speaker: String,
+}
 
 pub struct Segment {
     pub start_cs: i64,
@@ -17,7 +28,7 @@ pub struct Segment {
 pub fn collect_segments(state: &WhisperState) -> Result<Vec<Segment>> {
     let mut segments = Vec::new();
     for seg in state.as_iter() {
-        let text = seg.to_str().context("segment text")?.trim().to_string();
+        let text = seg.to_str_lossy().context("segment text")?.trim().to_string();
         if text.is_empty() {
             continue;
         }
@@ -90,6 +101,82 @@ pub fn write_txt(path: &Path, title: &str, segments: &[Segment]) -> Result<()> {
     }
     writeln!(file)?;
     Ok(())
+}
+
+pub fn collect_words(state: &WhisperState) -> Result<Vec<TimedWord>> {
+    let mut words = Vec::new();
+    for (segment_index, segment) in state.as_iter().enumerate() {
+        let token_count = segment.n_tokens();
+        for token_index in 0..token_count {
+            let Some(token) = segment.get_token(token_index) else {
+                continue;
+            };
+            let text = token.to_str_lossy().context("token text")?;
+            let trimmed = text.trim();
+            if trimmed.is_empty() || trimmed.starts_with('[') {
+                continue;
+            }
+            let data = token.token_data();
+            if data.t0 < 0 {
+                continue;
+            }
+            let start_cs = data.t0;
+            let end_cs = if data.t1 > data.t0 {
+                data.t1
+            } else {
+                data.t0 + 12
+            };
+            words.push(TimedWord {
+                start: start_cs as f64 / 100.0,
+                end: end_cs as f64 / 100.0,
+                text: normalize_text(trimmed),
+                segment_index,
+                speaker: String::new(),
+            });
+        }
+    }
+    Ok(words)
+}
+
+pub fn apply_word_speakers(words: &mut [TimedWord], segments: &[Segment]) {
+    for word in words.iter_mut() {
+        if let Some(segment) = segments.get(word.segment_index) {
+            word.speaker = segment.speaker.clone();
+        }
+    }
+}
+
+#[derive(Serialize)]
+struct WordsFile<'a> {
+    version: u32,
+    words: Vec<TimedWordOut<'a>>,
+}
+
+#[derive(Serialize)]
+struct TimedWordOut<'a> {
+    start: f64,
+    end: f64,
+    text: &'a str,
+    #[serde(skip_serializing_if = "str::is_empty")]
+    speaker: &'a str,
+}
+
+pub fn write_words_json(path: &Path, words: &[TimedWord]) -> Result<()> {
+    let out: Vec<TimedWordOut<'_>> = words
+        .iter()
+        .map(|word| TimedWordOut {
+            start: word.start,
+            end: word.end,
+            text: &word.text,
+            speaker: &word.speaker,
+        })
+        .collect();
+    let payload = WordsFile {
+        version: 1,
+        words: out,
+    };
+    let body = serde_json::to_string_pretty(&payload).context("serialize words.json")?;
+    std::fs::write(path, format!("{body}\n")).with_context(|| format!("write {}", path.display()))
 }
 
 pub fn write_ass(path: &Path, segments: &[Segment], store: &ProfileStore) -> Result<()> {
@@ -191,6 +278,33 @@ mod tests {
         assert_eq!(cs_to_srt_time(0), "00:00:00,000");
         assert_eq!(cs_to_srt_time(360_000), "01:00:00,000");
         assert_eq!(cs_to_ass_time(-1), "0:00:00.00");
+    }
+
+    #[test]
+    fn write_words_json_roundtrip() {
+        let tmp = TempDir::new().unwrap();
+        let words = vec![
+            TimedWord {
+                start: 1.2,
+                end: 1.5,
+                text: "hello".to_string(),
+                segment_index: 0,
+                speaker: String::new(),
+            },
+            TimedWord {
+                start: 1.5,
+                end: 1.9,
+                text: "world".to_string(),
+                segment_index: 0,
+                speaker: "Alice".to_string(),
+            },
+        ];
+        write_words_json(&tmp.path().join("ep.words.json"), &words).unwrap();
+        let body = std::fs::read_to_string(tmp.path().join("ep.words.json")).unwrap();
+        assert!(body.contains("\"version\": 1"));
+        assert!(body.contains("\"hello\""));
+        assert!(body.contains("\"Alice\""));
+        assert!(!body.contains("\"speaker\": \"\""));
     }
 
     #[test]
