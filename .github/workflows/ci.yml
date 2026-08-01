@@ -63,7 +63,7 @@ jobs:
         run: bash scripts/download-ci-test-models.sh
 
       - name: Install cargo-llvm-cov
-        uses: taiki-e/install-action@v2
+        uses: taiki-e/install-action@v2.85.4
         with:
           tool: cargo-llvm-cov
 
